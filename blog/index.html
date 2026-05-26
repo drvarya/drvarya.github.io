@@ -16,14 +16,19 @@
         <p><a href="/">Dhruv Arya</a></p>
         <nav aria-label="Site links">
           <a href="/">Home</a>
-          <a href="/search/">Search</a>
         </nav>
       </header>
 
       <section class="intro">
         <h1>Blog</h1>
         <p>Notes on software engineering, systems, debugging, and things I am learning.</p>
+        <label class="search-box">
+          <span>Search posts</span>
+          <input id="search-input" type="search" placeholder="debugging, APIs, systems">
+        </label>
       </section>
+
+      <!-- Search results section removed to simplify the posts page -->
 
       <section class="list-section" aria-labelledby="posts-title">
         <h2 id="posts-title">Posts:</h2>
@@ -31,11 +36,12 @@
           
             <li>
               <a href="/posts/2026-05-26-first-post/">First Post</a>
-              <span>May 26, 2026 · A placeholder post to validate the Markdown blog setup.</span>
+              <span>May 26, 2026 · A short note to validate the Markdown blog setup.</span>
             </li>
           
         </ul>
       </section>
     </main>
+    <script src="/search.js"></script>
   </body>
 </html>
