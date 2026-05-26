@@ -1,0 +1,11 @@
+[
+
+  {
+    "title": "First Post",
+    "description": "A placeholder post to validate the Markdown blog setup.",
+    "url": "/posts/2026-05-26-first-post/",
+    "date": "May 26, 2026",
+    "content": "\nThis is a Markdown post.\n\nYou can write normal Markdown here:\n\n- notes\n- code snippets\n- images\n- links\n\n```js\nconsole.log(\"Hello from Eleventy\");\n```\n"
+  }
+
+]
