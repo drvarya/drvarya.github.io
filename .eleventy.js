@@ -10,6 +10,13 @@ module.exports = function (eleventyConfig) {
       .sort((a, b) => b.date - a.date);
   });
 
+  eleventyConfig.addCollection("recentPosts", collectionApi => {
+    return collectionApi
+      .getFilteredByGlob("posts/*.md")
+      .sort((a, b) => b.date - a.date)
+      .slice(0, 5);
+  });
+
   eleventyConfig.addFilter("readableDate", date => {
     return new Intl.DateTimeFormat("en", {
       year: "numeric",

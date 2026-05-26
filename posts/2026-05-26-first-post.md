@@ -2,18 +2,18 @@
 layout: post.njk
 title: First Post
 date: 2026-05-26
-description: A placeholder post to validate the Markdown blog setup.
+description: A short note to validate the Markdown blog setup.
 ---
 
-This is a Markdown post.
+This is the first post on the site.
 
-You can write normal Markdown here:
+It exists mainly to prove the Markdown pipeline works end to end: author in Markdown, build locally, publish with GitHub Pages.
 
-- notes
-- code snippets
-- images
-- links
+What I want this blog to hold over time is simple:
 
-```js
-console.log("Hello from Eleventy");
-```
+- practical notes from real work
+- debugging writeups
+- systems thinking
+- small essays about how software gets built
+
+Later this can become a real archive instead of a placeholder.

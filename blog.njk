@@ -19,14 +19,19 @@ title: Blog
         <p><a href="/">Dhruv Arya</a></p>
         <nav aria-label="Site links">
           <a href="/">Home</a>
-          <a href="/search/">Search</a>
         </nav>
       </header>
 
       <section class="intro">
         <h1>Blog</h1>
         <p>Notes on software engineering, systems, debugging, and things I am learning.</p>
+        <label class="search-box">
+          <span>Search posts</span>
+          <input id="search-input" type="search" placeholder="debugging, APIs, systems">
+        </label>
       </section>
+
+      <!-- Search results section removed to simplify the posts page -->
 
       <section class="list-section" aria-labelledby="posts-title">
         <h2 id="posts-title">Posts:</h2>
@@ -42,5 +47,6 @@ title: Blog
         </ul>
       </section>
     </main>
+    <script src="/search.js"></script>
   </body>
 </html>
