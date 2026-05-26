@@ -1,0 +1,46 @@
+---
+title: Blog
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Posts by Dhruv Arya">
+    <title>Blog | Dhruv Arya</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main>
+      <header class="page-header">
+        <p><a href="/">Dhruv Arya</a></p>
+        <nav aria-label="Site links">
+          <a href="/">Home</a>
+          <a href="/search/">Search</a>
+        </nav>
+      </header>
+
+      <section class="intro">
+        <h1>Blog</h1>
+        <p>Notes on software engineering, systems, debugging, and things I am learning.</p>
+      </section>
+
+      <section class="list-section" aria-labelledby="posts-title">
+        <h2 id="posts-title">Posts:</h2>
+        <ul class="link-list">
+          {% for post in collections.posts %}
+            <li>
+              <a href="{{ post.url }}">{{ post.data.title }}</a>
+              <span>{{ post.date | readableDate }}{% if post.data.description %} · {{ post.data.description }}{% endif %}</span>
+            </li>
+          {% else %}
+            <li>No posts yet.</li>
+          {% endfor %}
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>
