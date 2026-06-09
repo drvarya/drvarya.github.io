@@ -3,6 +3,7 @@
   {
     "title": "First Post",
     "description": "A short note to validate the Markdown blog setup.",
+    "theme": "search",
     "url": "/posts/2026-05-26-first-post/",
     "date": "May 26, 2026",
     "content": "\nThis is the first post on the site.\n\nIt exists mainly to prove the Markdown pipeline works end to end: author in Markdown, build locally, publish with GitHub Pages.\n\nWhat I want this blog to hold over time is simple:\n\n- practical notes from real work\n- debugging writeups\n- systems thinking\n- small essays about how software gets built\n\nLater this can become a real archive instead of a placeholder.\n"
