@@ -3,6 +3,7 @@ layout: post.njk
 title: First Post
 date: 2026-05-26
 description: A short note to validate the Markdown blog setup.
+theme: search
 ---
 
 This is the first post on the site.

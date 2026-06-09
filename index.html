@@ -96,22 +96,22 @@
       </section>
 
       <section class="list-section" aria-labelledby="recent-title">
-        <h2 id="recent-title">Recent posts:</h2>
+        <h2 id="recent-title">Recent thoughts:</h2>
         <ul class="link-list">
           {% for post in collections.recentPosts %}
             <li>
               <a href="{{ post.url }}">{{ post.data.title }}</a>
-              <span>{{ post.date | readableDate }}{% if post.data.description %} · {{ post.data.description }}{% endif %}</span>
+              <span>{{ post.date | readableDate }}{% if post.data.theme %} · {{ post.data.theme }}{% endif %}{% if post.data.description %} · {{ post.data.description }}{% endif %}</span>
             </li>
           {% else %}
             <li>
-              <a href="/blog/">No posts yet</a>
+              <a href="/thoughts/">No thoughts yet</a>
               <span>Check back later</span>
             </li>
           {% endfor %}
         </ul>
         <p class="section-footer">
-          <a href="/blog/">All posts</a>
+          <a href="/thoughts/">All thoughts</a>
         </p>
       </section>
 

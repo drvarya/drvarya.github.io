@@ -1,13 +1,14 @@
 ---
-title: Blog
+title: Thoughts
+permalink: /thoughts/
 ---
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Posts by Dhruv Arya">
-    <title>Blog | Dhruv Arya</title>
+    <meta name="description" content="Thoughts by Dhruv Arya">
+    <title>Thoughts | Dhruv Arya</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,26 +24,35 @@ title: Blog
       </header>
 
       <section class="intro">
-        <h1>Blog</h1>
+        <h1>Thoughts</h1>
         <p>Notes on software engineering, systems, debugging, and things I am learning.</p>
         <label class="search-box">
-          <span>Search posts</span>
-          <input id="search-input" type="search" placeholder="debugging, APIs, systems">
+          <span>Search thoughts</span>
+          <input id="search-input" type="search" placeholder="search, agents, systems">
         </label>
       </section>
 
-      <!-- Search results section removed to simplify the posts page -->
+      <section class="theme-filter" aria-label="Themes">
+        <h2>Themes</h2>
+        <div class="theme-pills">
+          <button type="button" class="theme-pill is-active" data-theme="all">All</button>
+          <button type="button" class="theme-pill" data-theme="search">Search</button>
+          <button type="button" class="theme-pill" data-theme="agents">Agents</button>
+          <button type="button" class="theme-pill" data-theme="ml">ML</button>
+          <button type="button" class="theme-pill" data-theme="founder">Founder</button>
+        </div>
+      </section>
 
       <section class="list-section" aria-labelledby="posts-title">
-        <h2 id="posts-title">Posts:</h2>
+        <h2 id="posts-title">Thoughts:</h2>
         <ul class="link-list">
           {% for post in collections.posts %}
-            <li>
+            <li data-theme="{{ post.data.theme | default('') }}">
               <a href="{{ post.url }}">{{ post.data.title }}</a>
-              <span>{{ post.date | readableDate }}{% if post.data.description %} · {{ post.data.description }}{% endif %}</span>
+              <span>{{ post.date | readableDate }}{% if post.data.theme %} · {{ post.data.theme }}{% endif %}{% if post.data.description %} · {{ post.data.description }}{% endif %}</span>
             </li>
           {% else %}
-            <li>No posts yet.</li>
+            <li>No thoughts yet.</li>
           {% endfor %}
         </ul>
       </section>

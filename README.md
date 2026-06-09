@@ -1,11 +1,11 @@
 # Dhruv Arya Site
 
-Minimal personal site with an Eleventy Markdown blog.
+Minimal personal site with an Eleventy thoughts archive.
 
 ## Edit
 
 - Update `index.html` with real experience, links, email, and bio.
-- Add Markdown posts in `posts/`.
+- Add Markdown thoughts in `posts/` with `theme` frontmatter for filtering.
 - Adjust colors and spacing in `styles.css`.
 - Run `npm run dev` to preview locally.
 - Run `npm run build` to generate the static site into `_site/`.

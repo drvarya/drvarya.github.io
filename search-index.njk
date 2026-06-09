@@ -7,6 +7,7 @@ eleventyExcludeFromCollections: true
   {
     "title": {{ post.data.title | dump | safe }},
     "description": {{ (post.data.description or "") | dump | safe }},
+    "theme": {{ (post.data.theme or "") | dump | safe }},
     "url": {{ post.url | dump | safe }},
     "date": {{ (post.date | readableDate) | dump | safe }},
     "content": {{ post.rawInput | dump | safe }}
