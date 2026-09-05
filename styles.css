@@ -348,7 +348,9 @@ p {
 }
 
 .link-list a {
+  font-size: 0.88rem;
   font-weight: 500;
+  line-height: 1.4;
 }
 
 .link-list span {
