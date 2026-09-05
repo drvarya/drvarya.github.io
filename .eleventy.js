@@ -17,6 +17,12 @@ module.exports = function (eleventyConfig) {
       .slice(0, 5);
   });
 
+  eleventyConfig.addCollection("apps", collectionApi => {
+    return collectionApi
+      .getFilteredByGlob("apps/*.html")
+      .sort((a, b) => a.data.title.localeCompare(b.data.title));
+  });
+
   eleventyConfig.addFilter("readableDate", date => {
     return new Intl.DateTimeFormat("en", {
       year: "numeric",
