@@ -1,6 +1,6 @@
 ---
-permalink: /apps/chrome-gemini-nano/
-title: Chrome Gemini Nano
+permalink: /apps/nano-chat/
+title: Nano Chat
 description: A local chat interface powered by Chrome's built-in Gemini Nano model.
 ---
 <!DOCTYPE html>
@@ -15,6 +15,7 @@ description: A local chat interface powered by Chrome's built-in Gemini Nano mod
   <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
   <script src="https://unpkg.com/lucide@0.469.0"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/clock-factory@1.0.0/dist/analog-clock.min.js"></script>
   <style>
     :root {
       --sidebar: #141414;
@@ -164,6 +165,17 @@ description: A local chat interface powered by Chrome's built-in Gemini Nano mod
     .more-menu button.danger-item { color: var(--bad); }
     .icon.light { color: var(--mute); }
     .icon.light:hover { background: #f3f3f1; color: var(--ink); }
+    .provider-select {
+      font: 12px Inter, sans-serif; color: var(--ink);
+      border: 1px solid var(--line); border-radius: 8px;
+      background: #fff; padding: 5px 8px; max-width: 11rem;
+      outline: none; cursor: pointer;
+    }
+    .provider-select:hover, .provider-select:focus { border-color: #ccc; }
+    .model-fields[hidden] { display: none !important; }
+    .endpoint-status { font-size: 12px; color: var(--mute); margin-top: 6px; }
+    .endpoint-status.ok { color: var(--ok); }
+    .endpoint-status.bad { color: var(--bad); }
 
     .notes {
       width: min(var(--chat), calc(100% - 2 * var(--gutter)));
@@ -221,7 +233,62 @@ description: A local chat interface powered by Chrome's built-in Gemini Nano mod
     }
     .msg:hover .copy { opacity: 1; }
     .copy:hover { color: var(--ink); }
+    .speak {
+      opacity: 0; border: 0; background: none; color: #aaa; cursor: pointer;
+      padding: 4px 0 0 6px; display: inline-flex;
+    }
+    .msg:hover .speak { opacity: 1; }
+    .speak:hover { color: var(--ink); }
+    .speak.playing { opacity: 1; color: var(--ok); }
+    .mic {
+      width: 34px; height: 34px; border-radius: 999px; border: 1px solid var(--line);
+      background: var(--panel); color: var(--mute); display: grid; place-items: center; cursor: pointer;
+    }
+    .mic:hover { color: var(--ink); background: #f3f3f1; }
+    .mic.listening { background: var(--bad); color: #fff; border-color: var(--bad); animation: micpulse 1.2s ease-in-out infinite; }
+    @keyframes micpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(196,76,58,.4); } 50% { box-shadow: 0 0 0 6px rgba(196,76,58,0); } }
+    .voice-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .voice-row select, .voice-row input[type="range"] { flex: 1; }
+    .voice-select {
+      font: inherit; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink);
+    }
     .prose { font-size: 14.5px; line-height: 1.6; overflow-wrap: anywhere; }
+    .reasoning {
+      margin: 0 0 10px; border: 1px solid var(--line); border-radius: 10px;
+      background: #f7f7f5; color: var(--mute);
+      width: fit-content; max-width: 100%;
+    }
+    .reasoning[open] { width: 100%; }
+    .reasoning > summary {
+      cursor: pointer; list-style: none; padding: 6px 10px;
+      font-size: 12px; font-weight: 500; color: #888; line-height: 1;
+      display: inline-flex; align-items: center; gap: 6px; user-select: none;
+      min-height: 28px; box-sizing: border-box;
+    }
+    .reasoning > summary::-webkit-details-marker { display: none; }
+    .reasoning > summary::before { content: "▸"; font-size: 10px; line-height: 1; }
+    .reasoning[open] > summary::before { content: "▾"; }
+    .reasoning-body {
+      padding: 0 12px 10px; font-size: 12.5px; line-height: 1.5;
+      white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow: auto;
+    }
+    .reasoning.streaming > summary { color: var(--warn); }
+    .genui-clock {
+      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+      margin: 0 0 12px; padding: 18px 20px;
+      background: #1c1c1e; color: #f5f5f7; border-radius: 16px;
+      border: 1px solid #2c2c2e; max-width: 28rem;
+    }
+    .genui-clock-meta { min-width: 0; flex: 1; }
+    .genui-clock-time {
+      font: 600 2rem/1.1 Inter, ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: -0.02em; color: #fff;
+    }
+    .genui-clock-place, .genui-clock-date {
+      margin-top: 6px; font-size: 13px; color: #a1a1a6;
+    }
+    .genui-clock-face { flex: 0 0 auto; width: 120px; height: 120px; }
+    .genui-clock-face analog-clock { display: block; width: 120px; height: 120px; }
     .prose :where(p, ul, ol, pre, blockquote) { margin: .55em 0; }
     .prose :where(:first-child) { margin-top: 0; }
     .prose :where(:last-child) { margin-bottom: 0; }
@@ -435,7 +502,7 @@ description: A local chat interface powered by Chrome's built-in Gemini Nano mod
     <aside class="sidebar">
       <div class="brand">
         <div class="mark"><i data-lucide="sparkles" width="14" height="14"></i></div>
-        <div><strong>Nano Chat</strong><span>On-device Gemini</span></div>
+        <div><strong>Nano Chat</strong><span id="brandSub">Local chat</span></div>
       </div>
       <div class="side-pad">
         <button type="button" class="new-btn" id="newChatBtn"><i data-lucide="plus" width="15" height="15"></i> New chat</button>
@@ -458,6 +525,11 @@ description: A local chat interface powered by Chrome's built-in Gemini Nano mod
           <span class="status"><span class="dot" id="statusDot"></span><span id="statusText">Checking</span></span>
         </div>
         <div class="top-actions">
+          <select id="headerProvider" class="provider-select" aria-label="Model provider" title="Model provider">
+            <option value="nano">Chrome on-device</option>
+            <option value="transformers">Transformers.js (browser)</option>
+            <option value="openai">OpenAI-compatible</option>
+          </select>
           <details class="more" id="chatMenu">
             <summary class="icon light" aria-label="Chat actions"><i data-lucide="ellipsis" width="16" height="16"></i></summary>
             <div class="more-menu">
@@ -473,12 +545,12 @@ description: A local chat interface powered by Chrome's built-in Gemini Nano mod
       <div class="notes">
         <div class="banner" id="banner"></div>
         <div class="card" id="consentCard">
-          <h3>Download Gemini Nano to chat?</h3>
-          <p>Chrome will fetch the on-device model (several GB) into this browser profile. It runs locally.</p>
+          <h3>Download the on-device model?</h3>
+          <p>Chrome will fetch the Prompt API model (several GB) into this browser profile. It runs locally.</p>
           <button type="button" class="primary" id="consentCardBtn">Download model</button>
         </div>
         <div class="card" id="downloadBox">
-          <h3>Downloading Gemini Nano</h3>
+          <h3>Downloading on-device model</h3>
           <p id="downloadLabel">Chrome is fetching the on-device model for this origin.</p>
           <div class="meter"><span id="downloadBar"></span></div>
         </div>
@@ -505,11 +577,12 @@ description: A local chat interface powered by Chrome's built-in Gemini Nano mod
             <span>Image attached</span>
             <button type="button" class="ghost" id="clearImage">Remove</button>
           </div>
-          <textarea id="input" rows="1" placeholder="Message Gemini Nano"></textarea>
+          <textarea id="input" rows="1" placeholder="Message Nano Chat"></textarea>
           <div class="bar">
             <div style="display:flex;align-items:center;gap:6px">
               <button type="button" class="icon light" id="attachBtn" title="Attach image"><i data-lucide="image-plus" width="16" height="16"></i></button>
               <input type="file" id="fileInput" accept="image/*" hidden />
+              <button type="button" class="mic" id="micBtn" title="Speak your message" hidden><i data-lucide="mic" width="16" height="16"></i></button>
             </div>
             <div style="display:flex;align-items:center;gap:6px">
               <button type="button" class="ghost" id="stopBtn" hidden>Stop</button>
@@ -523,7 +596,7 @@ description: A local chat interface powered by Chrome's built-in Gemini Nano mod
 
   <dialog id="consentModal">
     <h3>Download the on-device model?</h3>
-    <p>Chrome needs Gemini Nano on this device before you can chat. The file is several gigabytes, stays in your Chrome profile, and runs locally.</p>
+    <p>Chrome needs its on-device Prompt API model before you can chat with that provider. The file is several gigabytes, stays in your Chrome profile, and runs locally.</p>
     <ul>
       <li>Recommended: desktop Chrome with about 22 GB free disk</li>
       <li>Remove later in Chrome Settings → System → On-device AI</li>
@@ -547,17 +620,18 @@ description: A local chat interface powered by Chrome's built-in Gemini Nano mod
     <h3>Settings</h3>
     <div class="settings-tabs" role="tablist">
       <button type="button" role="tab" id="settingsTabGeneral" aria-selected="true" aria-controls="settingsGeneral" data-tab="general">General</button>
+      <button type="button" role="tab" id="settingsTabModels" aria-selected="false" aria-controls="settingsModels" data-tab="models">Models</button>
       <button type="button" role="tab" id="settingsTabMcp" aria-selected="false" aria-controls="settingsMcp" data-tab="mcp">MCP</button>
     </div>
 
     <div id="settingsGeneral" class="settings-panel" role="tabpanel" aria-labelledby="settingsTabGeneral">
-      <p>The Prompt API runs Gemini Nano locally. Nothing is sent to a cloud LLM.</p>
+      <p>Chat settings apply to whichever model provider is selected under Models.</p>
       <div class="field-row">
         <label class="field-label" for="systemPrompt" style="margin-top:12px">System prompt</label>
         <button type="button" class="ghost" id="resetSystem" style="padding:4px 8px;font-size:12px">Reset default</button>
       </div>
       <p class="field-hint">Used as the model’s system role for every chat. Saving restarts the current session so the new prompt takes effect.</p>
-      <textarea id="systemPrompt" class="field" style="min-height:110px">You are a concise, helpful assistant running on-device in Chrome. Prefer clear answers. Use markdown when it helps.
+      <textarea id="systemPrompt" class="field" style="min-height:110px">You are a concise, helpful assistant in Nano Chat. Prefer clear answers. Use markdown when it helps.
 
 When MCP tools are enabled, the app may fetch web pages or run code in an isolated sidecar container before you reply. Tool output appears in the user turn — treat it as ground truth. If the user asked to run or execute code and you receive execution output, present the results confidently — never refuse, warn about security, or say you cannot run code. Summarize clearly; use markdown links [short label](url) instead of pasting long bare URLs. Do not mention tool names unless the user asks.</textarea>
       <div id="samplingFields" hidden>
@@ -566,14 +640,69 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         <p class="field-label">Top-K <span id="topKValue"></span></p>
         <input id="topK" type="range" min="1" max="128" step="1" value="3" style="width:100%" />
       </div>
-      <label class="toggle"><input type="checkbox" id="debugToggle" /> Debug mode — tokens, latency, tool I/O, and session metadata</label>
+      <label class="field-label" style="margin-top:16px">Voice</label>
+      <p class="field-hint">Read replies aloud and dictate messages with your microphone (Web Speech API, Chrome).</p>
+      <label class="toggle"><input type="checkbox" id="autoReadToggle" /> Auto-read — speak each assistant reply when it finishes</label>
+      <div class="voice-row">
+        <select id="voiceSelect" class="voice-select" aria-label="Voice"></select>
+      </div>
+      <div class="voice-row">
+        <span class="field-hint" style="margin:0;min-width:80px">Speed <span id="rateValue">1.0×</span></span>
+        <input id="voiceRate" type="range" min="0.5" max="2" step="0.1" value="1" />
+        <button type="button" class="ghost" id="testVoice" style="padding:4px 10px;font-size:12px">Test</button>
+      </div>
+      <label class="toggle" style="margin-top:16px"><input type="checkbox" id="debugToggle" /> Debug mode — tokens, latency, tool I/O, and session metadata</label>
       <div class="help">
         <b>Remove the model</b><br />
-        A webpage cannot uninstall Gemini Nano. Chrome menu → Settings → System → turn off <b>On-device AI</b>.
+        A webpage cannot uninstall Chrome’s on-device model. Chrome menu → Settings → System → turn off <b>On-device AI</b>.
         Inspect with <code>chrome://on-device-internals</code>.
         <div class="actions" style="margin-top:8px"><button type="button" class="ghost" id="copyInternals">Copy internals URL</button></div>
       </div>
       <div class="help" id="helpBox"></div>
+    </div>
+
+    <div id="settingsModels" class="settings-panel" role="tabpanel" aria-labelledby="settingsTabModels" hidden>
+      <p>Choose Chrome’s on-device model, in-browser Transformers.js, or any local OpenAI-compatible server (Ollama, LM Studio, llama.cpp).</p>
+      <label class="field-label" for="providerKind" style="margin-top:12px">Provider</label>
+      <select id="providerKind" class="field voice-select" style="margin-top:4px">
+        <option value="nano">On-device — Chrome Prompt API</option>
+        <option value="transformers">In-browser — Transformers.js (Hugging Face)</option>
+        <option value="openai">Local — OpenAI-compatible endpoint</option>
+      </select>
+
+      <div id="transformersFields" class="model-fields" hidden>
+        <label class="field-label" for="tfModel" style="margin-top:14px">Model</label>
+        <p class="field-hint">Same runtime as <code>transformers-playground.html</code> — Transformers.js v4 + WebGPU. Qwen3.5 supports images.</p>
+        <select id="tfModel" class="field voice-select" style="margin-top:4px"></select>
+        <div class="actions" style="margin-top:10px;justify-content:flex-start">
+          <button type="button" class="ghost" id="clearTfCache">Clear cache</button>
+        </div>
+        <p class="endpoint-status" id="tfStatus">First message downloads the model (~1 GB for Qwen3.5 0.8B), then it stays cached.</p>
+      </div>
+
+      <div id="openaiFields" class="model-fields" hidden>
+        <label class="field-label" for="openaiBaseUrl" style="margin-top:14px">Base URL</label>
+        <p class="field-hint">Must end with <code>/v1</code>. Ollama default: <code>http://localhost:11434/v1</code></p>
+        <input id="openaiBaseUrl" class="field" type="url" placeholder="http://localhost:11434/v1" />
+        <label class="field-label" for="openaiApiKey" style="margin-top:12px">API key <span style="font-weight:400;color:var(--mute)">(optional for Ollama)</span></label>
+        <input id="openaiApiKey" class="field" type="password" autocomplete="off" placeholder="Leave blank for local Ollama" />
+        <div class="field-row" style="margin-top:12px">
+          <label class="field-label" for="openaiModel" style="margin:0;flex:1">Model</label>
+          <button type="button" class="ghost" id="refreshModels" style="padding:4px 8px;font-size:12px">Refresh models</button>
+        </div>
+        <select id="openaiModel" class="field voice-select" style="margin-top:4px">
+          <option value="">Refresh to load models…</option>
+        </select>
+        <p class="endpoint-status" id="endpointStatus">Not checked yet</p>
+        <div class="help" style="margin-top:12px">
+          <b>Ollama CORS</b><br />
+          Browser calls need CORS. Start Ollama with:<br />
+          <code>OLLAMA_ORIGINS="*" ollama serve</code><br />
+          (or set <code>OLLAMA_ORIGINS</code> in your shell profile).<br />
+          Also open this app via <code>http://localhost:…</code> — <code>file://</code> cannot call Ollama (CORS).
+        </div>
+      </div>
+
     </div>
 
     <div id="settingsMcp" class="settings-panel" role="tabpanel" aria-labelledby="settingsTabMcp" hidden>
@@ -626,7 +755,22 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     marked.setOptions({ gfm: true, breaks: true });
 
     const DEFAULT_SIDECAR_URL = "http://127.0.0.1:9400";
+    const DEFAULT_OPENAI_BASE = "http://localhost:11434/v1";
     const TOOL_TEXT_LIMIT = 10000;
+    // Curated chat models from transformers-playground.html (verified in-browser).
+    const TF_DEFAULT_MODEL = "onnx-community/Qwen3.5-0.8B-ONNX-OPT";
+    const TF_CHAT_MODELS = [
+      { id: "onnx-community/Qwen3.5-0.8B-ONNX-OPT", short: "Qwen3.5 0.8B", note: "~1 GB · multimodal", kind: "qwen", chain: ["q4", "fp32"] },
+      { id: "onnx-community/Qwen3.5-2B-ONNX-OPT", short: "Qwen3.5 2B", note: "~2 GB · multimodal", kind: "qwen", chain: ["q4", "fp32"] },
+      { id: "onnx-community/Qwen3.5-4B-ONNX-OPT", short: "Qwen3.5 4B", note: "~3.5 GB · multimodal", kind: "qwen", chain: ["q4", "fp32"] },
+      { id: "LiquidAI/LFM2.5-2.6B-ONNX", short: "LFM2.5 2.6B", note: "~1.6 GB · text", kind: "pipe", chain: ["q4", "q4f16", "fp32"] },
+      { id: "huggingworld/NVIDIA-Nemotron-3-Nano-4B-BF16-ONNX", short: "Nemotron 3 Nano 4B", note: "~2.5 GB · text", kind: "pipe", chain: ["q4", "fp32"] },
+    ];
+    const TF_LIB_URLS = [
+      "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/transformers.web.min.js",
+      "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0",
+      "https://unpkg.com/@huggingface/transformers@4.2.0/dist/transformers.web.min.js",
+    ];
     const state = {
       chats: [], activeId: null, session: null, abort: null, busy: false,
       image: null, multimodal: true, availability: "unknown", params: null,
@@ -635,6 +779,10 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       toolsInChat: true, sidecarUrl: DEFAULT_SIDECAR_URL,
       sidecar: { available: false, tools: [], error: null, health: null },
       disabledTools: [],
+      tts: { autoRead: false, voiceURI: "", rate: 1 },
+      provider: { kind: "nano", baseUrl: DEFAULT_OPENAI_BASE, model: "", apiKey: "" },
+      openaiModels: [],
+      tfRuntime: { lib: null, key: "", pipe: null, qwen: null },
     };
     let savedSampling = { temperature: null, topK: null };
 
@@ -652,7 +800,10 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         chats: state.chats.map((c) => ({
           ...c,
-          messages: c.messages.map(({ role, content, imageName, id, meta, tool }) => ({ id, role, content, imageName, meta, tool })),
+          messages: c.messages.map(({ role, content, reasoning, imageName, id, meta, tool }) => ({
+            id, role, content, reasoning, imageName, meta,
+            tool: tool ? { name: tool.name, args: tool.args, output: tool.output, error: tool.error, navigateUrl: tool.navigateUrl, genui: tool.genui } : undefined,
+          })),
         })),
         activeId: state.activeId,
         system: state.system,
@@ -662,6 +813,13 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         toolsInChat: state.toolsInChat,
         sidecarUrl: state.sidecarUrl,
         disabledTools: state.disabledTools,
+        tts: state.tts,
+        provider: {
+          kind: state.provider.kind,
+          baseUrl: state.provider.baseUrl,
+          model: state.provider.model,
+          apiKey: state.provider.apiKey,
+        },
       }));
     }
     function load() {
@@ -678,6 +836,17 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
           if (typeof raw.toolsInChat === "boolean") state.toolsInChat = raw.toolsInChat;
           if (typeof raw.sidecarUrl === "string" && raw.sidecarUrl.trim()) state.sidecarUrl = raw.sidecarUrl.trim();
           if (Array.isArray(raw.disabledTools)) state.disabledTools = raw.disabledTools.filter((k) => typeof k === "string");
+          if (raw.tts && typeof raw.tts === "object") {
+            state.tts.autoRead = Boolean(raw.tts.autoRead);
+            if (typeof raw.tts.voiceURI === "string") state.tts.voiceURI = raw.tts.voiceURI;
+            if (Number.isFinite(raw.tts.rate)) state.tts.rate = raw.tts.rate;
+          }
+          if (raw.provider && typeof raw.provider === "object") {
+            if (raw.provider.kind === "openai" || raw.provider.kind === "nano" || raw.provider.kind === "transformers") state.provider.kind = raw.provider.kind;
+            if (typeof raw.provider.baseUrl === "string" && raw.provider.baseUrl.trim()) state.provider.baseUrl = raw.provider.baseUrl.trim().replace(/\/$/, "");
+            if (typeof raw.provider.model === "string") state.provider.model = raw.provider.model;
+            if (typeof raw.provider.apiKey === "string") state.provider.apiKey = raw.provider.apiKey;
+          }
           return;
         }
         if (old) {
@@ -700,8 +869,158 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       $("banner").innerHTML = html || "";
       $("banner").classList.toggle("show", Boolean(html));
     }
-    const MARKDOWN_PURIFY = { ADD_ATTR: ["target", "rel", "title"] };
+    const MARKDOWN_PURIFY = {
+      ADD_TAGS: ["analog-clock"],
+      ADD_ATTR: ["target", "rel", "title", "theme", "timezone", "size", "smooth", "show-seconds", "data-genui", "data-tz", "data-place", "data-theme"],
+    };
     const BARE_URL_RE = /(?<![(\["'])(https?:\/\/[^\s<>()\[\]"']+)/gi;
+    const LOCAL_TOOLS = [
+      {
+        name: "get_time",
+        description: "Returns the current date and time for an optional timezone or place (IANA id or place name). Omit timezone for the user's local zone.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            timezone: { type: "string", description: "IANA timezone or place name. Omit for local timezone." },
+            place: { type: "string", description: "Optional display label" },
+          },
+          additionalProperties: false,
+        },
+        local: true,
+      },
+    ];
+    function isValidTimeZone(tz) {
+      try {
+        Intl.DateTimeFormat("en-US", { timeZone: tz }).format(new Date());
+        return true;
+      } catch { return false; }
+    }
+    // Normalize get_time args only — not used for tool routing.
+    function resolveTimeZone(hint) {
+      const raw = String(hint || "").trim();
+      if (!raw) return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      if (isValidTimeZone(raw)) return raw;
+      const lower = raw.toLowerCase().replace(/[_-]+/g, " ").trim();
+      const aliases = {
+        india: "Asia/Kolkata", mumbai: "Asia/Kolkata", delhi: "Asia/Kolkata", ist: "Asia/Kolkata",
+        tokyo: "Asia/Tokyo", japan: "Asia/Tokyo",
+        london: "Europe/London", uk: "Europe/London",
+        paris: "Europe/Paris", dubai: "Asia/Dubai", singapore: "Asia/Singapore",
+        sydney: "Australia/Sydney",
+        "new york": "America/New_York", nyc: "America/New_York",
+        "los angeles": "America/Los_Angeles", la: "America/Los_Angeles",
+        utc: "UTC",
+      };
+      if (aliases[lower]) return aliases[lower];
+      const compact = raw.replace(/\s+/g, "_");
+      if (isValidTimeZone(compact)) return compact;
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    }
+    function placeLabelForZone(timezone, explicitPlace) {
+      if (explicitPlace) return String(explicitPlace).trim();
+      if (!timezone) return "Local";
+      return timezone.includes("/")
+        ? timezone.split("/").pop().replace(/_/g, " ")
+        : timezone;
+    }
+    function getTimeInfo(timezoneHint, placeHint) {
+      const now = new Date();
+      const timezone = resolveTimeZone(timezoneHint);
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        weekday: "long", year: "numeric", month: "long", day: "numeric",
+        hour: "numeric", minute: "2-digit", second: "2-digit",
+        hour12: true, timeZoneName: "short",
+      }).formatToParts(now);
+      const get = (type) => parts.find((p) => p.type === type)?.value || "";
+      let offset = "";
+      try {
+        const offParts = new Intl.DateTimeFormat("en-US", { timeZone: timezone, timeZoneName: "shortOffset" }).formatToParts(now);
+        offset = (offParts.find((p) => p.type === "timeZoneName")?.value || "").replace("GMT", "UTC");
+      } catch {
+        offset = get("timeZoneName");
+      }
+      const place = `${placeLabelForZone(timezone, placeHint)} (${get("timeZoneName") || offset || timezone})`;
+      return {
+        iso: now.toISOString(),
+        timezone,
+        timeZoneName: get("timeZoneName"),
+        place,
+        time12: `${get("hour")}:${get("minute")} ${get("dayPeriod")}`.trim(),
+        dateLong: `${get("weekday")}, ${get("month")} ${get("day")}, ${get("year")}`,
+        offset,
+        epochMs: now.getTime(),
+      };
+    }
+    function runLocalTool(plan) {
+      if (plan.tool === "get_time") {
+        // Only trust explicit tool args from the LLM — never scrape the user message.
+        const info = getTimeInfo(plan.timezone || plan.place, plan.place);
+        return {
+          name: "get_time",
+          args: { timezone: info.timezone, place: info.place },
+          text: JSON.stringify(info, null, 2),
+          genui: { type: "clock", timezone: info.timezone, place: info.place, theme: "classic" },
+        };
+      }
+      return null;
+    }
+    function genuiClockHtml(cfg = {}) {
+      const tz = cfg.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const place = cfg.place || tz;
+      const theme = cfg.theme || "classic";
+      return `<div class="genui-clock" data-genui="clock" data-tz="${escapeHtml(tz)}" data-place="${escapeHtml(place)}" data-theme="${escapeHtml(theme)}">
+        <div class="genui-clock-meta">
+          <div class="genui-clock-time">—</div>
+          <div class="genui-clock-place">${escapeHtml(place)}</div>
+          <div class="genui-clock-date"></div>
+        </div>
+        <div class="genui-clock-face">
+          <analog-clock theme="${escapeHtml(theme)}" timezone="${escapeHtml(tz)}" size="120px" smooth show-seconds></analog-clock>
+        </div>
+      </div>`;
+    }
+    function extractGenUI(text) {
+      const blocks = [];
+      const cleaned = String(text || "").replace(/```genui(?:\s+(\w+))?\s*\n([\s\S]*?)```/gi, (_, kind, body) => {
+        let cfg = {};
+        try { cfg = JSON.parse(String(body || "").trim()); } catch { cfg = {}; }
+        if (!cfg.type && kind) cfg.type = String(kind).trim();
+        if (!cfg.type) cfg.type = "clock";
+        const i = blocks.length;
+        blocks.push(cfg);
+        return `\n\n@@GENUI_${i}@@\n\n`;
+      });
+      return { cleaned, blocks };
+    }
+    function tickGenUIClocks(root = document) {
+      root.querySelectorAll?.(".genui-clock[data-genui='clock']").forEach((el) => {
+        const tz = el.dataset.tz || undefined;
+        const now = new Date();
+        try {
+          const timeFmt = new Intl.DateTimeFormat("en-US", {
+            timeZone: tz, hour: "numeric", minute: "2-digit", hour12: true,
+          });
+          let label = "Today";
+          try {
+            const z = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "shortOffset" }).formatToParts(now);
+            const off = z.find((p) => p.type === "timeZoneName")?.value || "";
+            label = `Today, ${off.replace("GMT", "UTC") || "+0"}`;
+          } catch {
+            const offsetMin = -now.getTimezoneOffset();
+            const sign = offsetMin >= 0 ? "+" : "-";
+            label = `Today, ${sign}${Math.floor(Math.abs(offsetMin) / 60)}hrs`;
+          }
+          const timeEl = el.querySelector(".genui-clock-time");
+          const dateEl = el.querySelector(".genui-clock-date");
+          if (timeEl) timeEl.textContent = timeFmt.format(now);
+          if (dateEl) dateEl.textContent = label;
+        } catch {}
+      });
+    }
+    if (!window.__nanoClockTimer) {
+      window.__nanoClockTimer = setInterval(() => tickGenUIClocks(document), 1000);
+    }
 
     function trimUrlPunctuation(url) {
       let u = url;
@@ -755,8 +1074,15 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       return tpl.innerHTML;
     }
     function renderMarkdown(text) {
-      const html = enhanceLinks(marked.parse(linkifyBareUrls(text)));
-      return DOMPurify.sanitize(html, MARKDOWN_PURIFY);
+      const { cleaned, blocks } = extractGenUI(text);
+      let html = enhanceLinks(marked.parse(linkifyBareUrls(cleaned)));
+      html = DOMPurify.sanitize(html, MARKDOWN_PURIFY);
+      html = html.replace(/@@GENUI_(\d+)@@/g, (_, i) => {
+        const cfg = blocks[Number(i)];
+        if (!cfg || (cfg.type && cfg.type !== "clock")) return "";
+        return genuiClockHtml(cfg);
+      });
+      return html;
     }
     function fmtNum(n) {
       if (typeof n !== "number" || !Number.isFinite(n)) return "—";
@@ -776,6 +1102,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         output: output.slice(0, TOOL_TEXT_LIMIT),
         navigateUrl: toolUse.navigateUrl || extra.navigateUrl,
         chain: extra.chain,
+        genui: toolUse.genui || extra.genui,
       };
     }
     function toolDebugBlock(msg) {
@@ -814,6 +1141,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         if (tool.name === "evaluate") return "Reading page text…";
         if (tool.name === "execute_code") return "Running code…";
         if (tool.name === "screenshot") return "Taking screenshot…";
+        if (tool.name === "get_time") return "Reading time…";
         return `Calling ${tool.name}…`;
       }
       const { name, args = {}, navigateUrl } = tool;
@@ -834,6 +1162,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         return `Ran ${lang} code`;
       }
       if (name === "screenshot") return "Screenshot saved";
+      if (name === "get_time") return args.place ? `Got time · ${args.place}` : "Got time";
       return name;
     }
     function toolCallDetail(tool) {
@@ -983,6 +1312,594 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       if (self.ai?.languageModel) return self.ai.languageModel;
       return null;
     }
+    function isOpenAIProvider() {
+      return state.provider.kind === "openai";
+    }
+    function isTransformersProvider() {
+      return state.provider.kind === "transformers";
+    }
+    function isNanoProvider() {
+      return state.provider.kind === "nano";
+    }
+    function normalizeOpenAIBase(url) {
+      let base = String(url || "").trim().replace(/\/+$/, "");
+      if (!base) base = DEFAULT_OPENAI_BASE;
+      if (!/\/v1$/i.test(base)) base += "/v1";
+      return base;
+    }
+    function openaiHeaders() {
+      const headers = { "Content-Type": "application/json" };
+      if (state.provider.apiKey) headers.Authorization = `Bearer ${state.provider.apiKey}`;
+      return headers;
+    }
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error("Failed to read image"));
+        reader.readAsDataURL(file);
+      });
+    }
+    function toOpenAIMessages(promptInput, history) {
+      const msgs = [];
+      const system = buildSystemPrompt();
+      if (system) msgs.push({ role: "system", content: system });
+      for (const m of history || []) {
+        if ((m.role === "user" || m.role === "assistant") && m.content && !m.streaming) {
+          msgs.push({ role: m.role, content: String(m.content) });
+        }
+      }
+      if (typeof promptInput === "string") {
+        msgs.push({ role: "user", content: promptInput });
+      } else if (promptInput && Array.isArray(promptInput.content) && promptInput.content.some((p) => p?.type === "image_url")) {
+        // Already OpenAI vision content parts
+        msgs.push({ role: "user", content: promptInput.content });
+      } else if (Array.isArray(promptInput)) {
+        // Prompt API multimodal shape → OpenAI vision parts when possible
+        const parts = [];
+        for (const turn of promptInput) {
+          if (typeof turn?.content === "string") parts.push({ type: "text", text: turn.content });
+          else if (Array.isArray(turn?.content)) {
+            for (const p of turn.content) {
+              if (p?.type === "text" && p.value) parts.push({ type: "text", text: String(p.value) });
+              else if (p?.type === "image" && typeof p.value === "string" && p.value.startsWith("data:")) {
+                parts.push({ type: "image_url", image_url: { url: p.value } });
+              } else if (p?.type === "image") {
+                parts.push({ type: "text", text: "[image attached]" });
+              }
+            }
+          }
+        }
+        const hasImage = parts.some((p) => p.type === "image_url");
+        msgs.push({
+          role: "user",
+          content: hasImage ? parts : (parts.map((p) => p.text).filter(Boolean).join("\n") || "(empty)"),
+        });
+      } else {
+        msgs.push({ role: "user", content: String(promptInput ?? "") });
+      }
+      return msgs;
+    }
+    async function* parseOpenAISSE(response) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(":")) continue;
+          if (!trimmed.startsWith("data:")) continue;
+          const data = trimmed.slice(5).trim();
+          if (data === "[DONE]") return;
+          try {
+            const json = JSON.parse(data);
+            const delta = json.choices?.[0]?.delta || {};
+            const content = delta.content;
+            const reasoning = delta.reasoning ?? delta.reasoning_content;
+            const piece = {};
+            if (typeof reasoning === "string" && reasoning) piece.reasoning = reasoning;
+            if (typeof content === "string" && content) piece.content = content;
+            if (piece.reasoning || piece.content) yield piece;
+          } catch { /* ignore partial/non-JSON SSE lines */ }
+        }
+      }
+    }
+    function createOpenAISession() {
+      const base = normalizeOpenAIBase(state.provider.baseUrl);
+      const model = state.provider.model;
+      if (!model) throw new Error("Pick a model in Settings → Models (Refresh models after starting Ollama).");
+      return {
+        provider: "openai",
+        model,
+        baseUrl: base,
+        contextUsage: null,
+        contextWindow: null,
+        async *promptStreaming(promptInput, { signal } = {}) {
+          // messages() already includes the current user turn; exclude streaming stub and rebuild user from promptInput
+          const priorMsgs = messages()
+            .filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming && m.content)
+            .slice(0, -1);
+          const body = {
+            model,
+            messages: toOpenAIMessages(promptInput, priorMsgs),
+            stream: true,
+            temperature: Number($("temperature")?.value) || 1,
+          };
+          const res = await fetch(`${base}/chat/completions`, {
+            method: "POST",
+            headers: openaiHeaders(),
+            body: JSON.stringify(body),
+            signal,
+          });
+          if (!res.ok) {
+            const errText = await res.text().catch(() => "");
+            let detail = errText;
+            try { detail = JSON.parse(errText)?.error?.message || errText; } catch {}
+            throw new Error(`OpenAI endpoint ${res.status}: ${detail || res.statusText}`);
+          }
+          yield* parseOpenAISSE(res);
+        },
+        async prompt(promptInput, { signal } = {}) {
+          let out = "";
+          for await (const chunk of this.promptStreaming(promptInput, { signal })) {
+            if (typeof chunk === "string") out += chunk;
+            else if (chunk?.content) out += chunk.content;
+          }
+          return out;
+        },
+        destroy() {},
+      };
+    }
+    function tfModelMeta(id) {
+      return TF_CHAT_MODELS.find((m) => m.id === id) || null;
+    }
+    function pickTfModel() {
+      return String($("tfModel")?.value || state.provider.model || TF_DEFAULT_MODEL).trim() || TF_DEFAULT_MODEL;
+    }
+    function fillTfModelSelect(selected) {
+      const sel = $("tfModel");
+      if (!sel) return;
+      const pick = selected || TF_DEFAULT_MODEL;
+      sel.innerHTML = TF_CHAT_MODELS.map((m) =>
+        `<option value="${escapeHtml(m.id)}"${m.id === pick ? " selected" : ""}>${escapeHtml(m.short)} — ${escapeHtml(m.note)}</option>`
+      ).join("");
+      if (TF_CHAT_MODELS.some((m) => m.id === pick)) sel.value = pick;
+      else sel.value = TF_DEFAULT_MODEL;
+    }
+    function tfDevice() {
+      return (typeof navigator !== "undefined" && navigator.gpu) ? "webgpu" : "wasm";
+    }
+    async function loadTransformersLib() {
+      if (state.tfRuntime?.lib?.pipeline) return state.tfRuntime.lib;
+      setTfStatus("", "Loading Transformers.js v4…");
+      let lastErr = null;
+      for (const url of TF_LIB_URLS) {
+        try {
+          const mod = await import(url);
+          if (!mod?.pipeline) throw new Error("no pipeline export");
+          if (mod.env) {
+            mod.env.allowLocalModels = false;
+            mod.env.allowRemoteModels = true;
+            try {
+              if (mod.env?.backends?.onnx?.wasm) {
+                mod.env.backends.onnx.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 4);
+              }
+            } catch {}
+          }
+          state.tfRuntime.lib = mod;
+          setTfStatus("ok", `Transformers.js v${mod.VERSION || mod.version || "4.2.0"} ready`);
+          return mod;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw new Error(`Transformers.js failed to load (${lastErr?.message || lastErr || "unknown"})`);
+    }
+    function isMissingTfFile(err) {
+      return /\.onnx|onnx_data|404|not found|does not exist|dtype/i.test(String(err?.message || err));
+    }
+    async function ensureTfPipe(modelId, chain) {
+      const T = await loadTransformersLib();
+      const device = tfDevice();
+      const chainList = (chain && chain.length) ? chain : ["q4", "fp32"];
+      let lastErr = null;
+      for (let i = 0; i < chainList.length; i++) {
+        const dtype = chainList[i];
+        const key = `pipe|${modelId}|${device}|${dtype}`;
+        if (state.tfRuntime.pipe && state.tfRuntime.key === key) return state.tfRuntime.pipe;
+        setTfStatus("", `Loading ${modelId.split("/").pop()} (${device}/${dtype})…`);
+        try {
+          const pipe = await T.pipeline("text-generation", modelId, {
+            device,
+            dtype,
+            progress_callback: (ev) => {
+              if (typeof ev?.loaded === "number" && ev.total) {
+                const pct = Math.min(99, Math.round(100 * ev.loaded / ev.total));
+                setTfStatus("", `Downloading ${modelId.split("/").pop()} · ${pct}%`);
+              }
+            },
+          });
+          state.tfRuntime = { ...state.tfRuntime, key, pipe, qwen: null };
+          setTfStatus("ok", `Loaded ${modelId.split("/").pop()} · ${device}/${dtype}`);
+          return pipe;
+        } catch (err) {
+          lastErr = err;
+          if (i < chainList.length - 1 && isMissingTfFile(err)) continue;
+          throw err;
+        }
+      }
+      throw lastErr || new Error("Failed to load model");
+    }
+    async function ensureTfQwen(modelId) {
+      const T = await loadTransformersLib();
+      if (!T.Qwen3_5ForConditionalGeneration || !T.AutoProcessor) {
+        throw new Error("This Transformers.js build lacks Qwen3.5 support. Hard-refresh to fetch v4.2.0.");
+      }
+      const device = tfDevice();
+      const key = `qwen|${modelId}|${device}`;
+      if (state.tfRuntime.qwen && state.tfRuntime.key === key) return state.tfRuntime.qwen;
+      setTfStatus("", `Loading ${modelId.split("/").pop()} (Qwen3.5 · ${device})…`);
+      const processor = await T.AutoProcessor.from_pretrained(modelId);
+      const model = await T.Qwen3_5ForConditionalGeneration.from_pretrained(modelId, {
+        dtype: { embed_tokens: "q4", vision_encoder: "fp16", decoder_model_merged: "q4" },
+        device,
+        progress_callback: (ev) => {
+          if (typeof ev?.loaded === "number" && ev.total) {
+            const pct = Math.min(99, Math.round(100 * ev.loaded / ev.total));
+            setTfStatus("", `Downloading ${modelId.split("/").pop()} · ${pct}%`);
+          }
+        },
+      });
+      const entry = { processor, model, device };
+      state.tfRuntime = { ...state.tfRuntime, key, qwen: entry, pipe: null };
+      setTfStatus("ok", `Loaded ${modelId.split("/").pop()} · ${device}`);
+      return entry;
+    }
+    function qwenChatPrompt(hist, thinking) {
+      let p = "";
+      for (const m of hist) {
+        p += `<|im_start|>${m.role}\n`;
+        if (m.hasImage) p += "<|vision_start|><|image_pad|><|vision_end|>";
+        p += (m.text || "") + "<|im_end|>\n";
+      }
+      p += thinking ? "<|im_start|>assistant\n<think>\n" : "<|im_start|>assistant\n<think>\n\n</think>\n\n";
+      return p;
+    }
+    function stripThink(text) {
+      const m = String(text ?? "");
+      const i = m.indexOf("</think>");
+      if (i === -1) return m.replace(/^[\s\S]*?<think>/, "").replace(/<\|im_end\|>[\s\S]*$/s, "").trim();
+      return m.slice(i + 8).replace(/<\|im_end\|>[\s\S]*$/s, "").trim();
+    }
+    async function clearTransformersCache() {
+      let deletedCaches = 0;
+      try {
+        if ("caches" in self && typeof caches.keys === "function") {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(async (key) => {
+            if (await caches.delete(key)) deletedCaches += 1;
+          }));
+        }
+      } catch {}
+      state.tfRuntime = { lib: state.tfRuntime?.lib || null, key: "", pipe: null, qwen: null };
+      if (state.session?.provider === "transformers") state.session = null;
+      setTfStatus("ok", `Cleared ${deletedCaches} cache storage${deletedCaches === 1 ? "" : "s"}.`);
+      showBanner(`Transformers cache cleared (${deletedCaches}).`);
+      return { deletedCaches };
+    }
+    function tfOutputToText(out) {
+      if (typeof out === "string") return out;
+      if (Array.isArray(out)) {
+        for (const item of out) {
+          const t = tfOutputToText(item);
+          if (t) return t;
+        }
+        return "";
+      }
+      if (!out || typeof out !== "object") return "";
+      return String(out.generated_text || out.answer || out.caption || out.text || out.summary_text || "").trim();
+    }
+    function extractPromptPayload(promptInput) {
+      if (promptInput && typeof promptInput === "object" && ("text" in promptInput || "imageBlob" in promptInput)) {
+        return {
+          text: String(promptInput.text || "").trim(),
+          imageBlob: promptInput.imageBlob || null,
+          image: "",
+        };
+      }
+      if (typeof promptInput === "string") return { text: promptInput, image: "", imageBlob: null };
+      if (promptInput && Array.isArray(promptInput.content)) {
+        const text = promptInput.content
+          .filter((p) => p?.type === "text")
+          .map((p) => String(p.text || ""))
+          .join("\n")
+          .trim();
+        const image = promptInput.content.find((p) => p?.type === "image_url")?.image_url?.url || "";
+        return { text, image, imageBlob: null };
+      }
+      if (Array.isArray(promptInput)) {
+        let text = "";
+        let image = "";
+        for (const turn of promptInput) {
+          if (typeof turn?.content === "string") text += `${text ? "\n" : ""}${turn.content}`;
+          if (!Array.isArray(turn?.content)) continue;
+          for (const p of turn.content) {
+            if (p?.type === "text" && p.value) text += `${text ? "\n" : ""}${String(p.value)}`;
+            if (!image && p?.type === "image" && typeof p.value === "string") image = p.value;
+          }
+        }
+        return { text: text.trim(), image, imageBlob: null };
+      }
+      return { text: String(promptInput ?? ""), image: "", imageBlob: null };
+    }
+    async function blobFromPayload(payload) {
+      if (payload.imageBlob) return payload.imageBlob;
+      if (!payload.image) return null;
+      if (typeof payload.image === "string" && payload.image.startsWith("data:")) {
+        const res = await fetch(payload.image);
+        return res.blob();
+      }
+      return null;
+    }
+    function createTransformersSession() {
+      const modelId = pickTfModel();
+      const meta = tfModelMeta(modelId) || { id: modelId, kind: "pipe", chain: ["q4", "fp32"] };
+      return {
+        provider: "transformers",
+        model: modelId,
+        contextUsage: null,
+        contextWindow: null,
+        async *promptStreaming(promptInput, { signal } = {}) {
+          const payload = extractPromptPayload(promptInput);
+          const prompt = payload.text || (payload.imageBlob || payload.image ? "Describe the image." : "");
+          if (!prompt) throw new Error("Type a message first.");
+          const T = await loadTransformersLib();
+          if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+
+          if (meta.kind === "qwen") {
+            const { processor, model } = await ensureTfQwen(modelId);
+            const hist = messages()
+              .filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming)
+              .slice(-8)
+              .map((m) => ({
+                role: m.role,
+                text: String(m.content || ""),
+                hasImage: Boolean(m.imageUrl || m.imageName),
+              }));
+            // Current user turn is already in messages(); mark image on last user if present.
+            const blob = await blobFromPayload(payload);
+            if (blob && hist.length) hist[hist.length - 1].hasImage = true;
+            if (blob && meta.kind !== "qwen") throw new Error("Attach images with a Qwen3.5 model.");
+            let rawImage = null;
+            if (blob) {
+              rawImage = await T.RawImage.fromBlob(blob);
+              rawImage = await rawImage.resize(448, 448);
+            }
+            const chatPrompt = qwenChatPrompt(hist, false);
+            const inputs = rawImage ? await processor(chatPrompt, rawImage) : await processor(chatPrompt);
+            let full = "";
+            await model.generate({
+              ...inputs,
+              max_new_tokens: 512,
+              do_sample: true,
+              temperature: Number($("temperature")?.value) || 0.7,
+              top_p: 0.9,
+              repetition_penalty: 1.1,
+              streamer: new T.TextStreamer(processor.tokenizer, {
+                skip_prompt: true,
+                skip_special_tokens: true,
+                callback_function: (chunk) => { full += chunk; },
+              }),
+            });
+            if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+            const cleaned = stripThink(full) || full.trim() || "(empty — try again)";
+            for (let i = 0; i < cleaned.length; i += 48) {
+              if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+              yield { content: cleaned.slice(i, i + 48) };
+              await Promise.resolve();
+            }
+            return;
+          }
+
+          if (payload.imageBlob || payload.image) {
+            throw new Error("This model is text-only. Pick a Qwen3.5 model to chat about images.");
+          }
+          const pipe = await ensureTfPipe(modelId, meta.chain);
+          const hist = messages()
+            .filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming && m.content)
+            .slice(-8)
+            .map((m) => ({ role: m.role, content: String(m.content) }));
+          let chatPrompt;
+          try {
+            chatPrompt = pipe.tokenizer.apply_chat_template(hist, { tokenize: false, add_generation_prompt: true });
+          } catch {
+            chatPrompt = hist.map((m) => `${m.role}: ${m.content}`).join("\n") + "\nassistant:";
+          }
+          let full = "";
+          const out = await pipe(chatPrompt, {
+            max_new_tokens: 256,
+            temperature: Number($("temperature")?.value) || 0.7,
+            do_sample: true,
+            return_full_text: false,
+            streamer: new T.TextStreamer(pipe.tokenizer, {
+              skip_prompt: true,
+              skip_special_tokens: true,
+              callback_function: (chunk) => { full += chunk; },
+            }),
+          });
+          let final = tfOutputToText(out) || full;
+          if (typeof final === "string" && chatPrompt && final.startsWith(chatPrompt)) final = final.slice(chatPrompt.length);
+          final = stripThink(final) || final.trim() || "No text output from model.";
+          for (let i = 0; i < final.length; i += 48) {
+            if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+            yield { content: final.slice(i, i + 48) };
+            await Promise.resolve();
+          }
+        },
+        async prompt(promptInput, { signal } = {}) {
+          let out = "";
+          for await (const chunk of this.promptStreaming(promptInput, { signal })) {
+            if (typeof chunk === "string") out += chunk;
+            else if (chunk?.content) out += chunk.content;
+          }
+          return out;
+        },
+        destroy() {},
+      };
+    }
+    function setEndpointStatus(kind, text) {
+      const el = $("endpointStatus");
+      if (!el) return;
+      el.className = "endpoint-status" + (kind ? " " + kind : "");
+      el.textContent = text;
+    }
+    function setTfStatus(kind, text) {
+      const el = $("tfStatus");
+      if (!el) return;
+      el.className = "endpoint-status" + (kind ? " " + kind : "");
+      el.textContent = text;
+    }
+    function fillModelSelect(models, selected) {
+      const sel = $("openaiModel");
+      if (!sel) return;
+      if (!models.length) {
+        sel.innerHTML = `<option value="">Click Refresh models…</option>`;
+        return;
+      }
+      sel.innerHTML = models.map((id) =>
+        `<option value="${escapeHtml(id)}"${id === selected ? " selected" : ""}>${escapeHtml(id)}</option>`
+      ).join("");
+      if (selected && models.includes(selected)) sel.value = selected;
+      else if (models.length) sel.value = models[0];
+    }
+    async function fetchOpenAIModelList(base, headers) {
+      const res = await fetch(`${base}/models`, { headers, signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const data = await res.json();
+      const models = (data?.data || [])
+        .map((m) => m.id || m.name)
+        .filter(Boolean);
+      if (models.length) return models;
+      throw new Error("Empty model list from /v1/models");
+    }
+    async function fetchOllamaTags(base, headers) {
+      // Fallback for Ollama: /api/tags on the host root (strip trailing /v1)
+      const root = base.replace(/\/v1$/i, "");
+      const res = await fetch(`${root}/api/tags`, { headers, signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const data = await res.json();
+      return (data?.models || []).map((m) => m.name || m.model).filter(Boolean);
+    }
+    function endpointProbeHint(err) {
+      if (location.protocol === "file:") {
+        return "Open Nano Chat via http://localhost (not file://). Example: python3 -m http.server 8000";
+      }
+      const msg = err?.message || String(err);
+      if (/Failed to fetch|NetworkError|Load failed|CORS|403/i.test(msg)) {
+        return "Browser blocked the request (CORS). Serve this page over http://localhost and ensure Ollama allows it (OLLAMA_ORIGINS=\"*\").";
+      }
+      return msg;
+    }
+    async function refreshOpenAIModels({ silent = false } = {}) {
+      const base = normalizeOpenAIBase($("openaiBaseUrl")?.value || state.provider.baseUrl);
+      if (!silent) setEndpointStatus("", "Checking…");
+      if (location.protocol === "file:") {
+        const hint = endpointProbeHint({ message: "file" });
+        setEndpointStatus("bad", hint);
+        fillModelSelect([], "");
+        throw new Error(hint);
+      }
+      try {
+        const headers = { Accept: "application/json" };
+        const key = $("openaiApiKey")?.value ?? state.provider.apiKey;
+        if (key) headers.Authorization = `Bearer ${key}`;
+        let models = [];
+        let lastErr = null;
+        try {
+          models = await fetchOpenAIModelList(base, headers);
+        } catch (err) {
+          lastErr = err;
+          try { models = await fetchOllamaTags(base, headers); }
+          catch (err2) { lastErr = err2; }
+        }
+        if (!models.length) throw lastErr || new Error("No models found");
+        models = [...new Set(models)].sort((a, b) => a.localeCompare(b));
+        state.openaiModels = models;
+        const preferred = $("openaiModel")?.value || state.provider.model || "gemma4:12b-mlx";
+        const pick = models.includes(preferred) ? preferred : (models[0] || "");
+        fillModelSelect(models, pick);
+        if (pick && (!state.provider.model || !models.includes(state.provider.model))) {
+          state.provider.model = pick;
+          syncProviderUI();
+          persist();
+        }
+        setEndpointStatus("ok", `Connected · ${models.length} model${models.length === 1 ? "" : "s"} @ ${base}`);
+        return models;
+      } catch (err) {
+        const hint = endpointProbeHint(err);
+        setEndpointStatus("bad", `Not reachable: ${hint}`);
+        if (!silent) fillModelSelect(state.openaiModels, state.provider.model);
+        throw err;
+      }
+    }
+    function syncProviderUI() {
+      const kind = state.provider.kind;
+      const header = $("headerProvider");
+      if (header) header.value = kind;
+      const pk = $("providerKind");
+      if (pk) pk.value = kind;
+      const openaiFields = $("openaiFields");
+      if (openaiFields) openaiFields.hidden = kind !== "openai";
+      const tfFields = $("transformersFields");
+      if (tfFields) tfFields.hidden = kind !== "transformers";
+      if ($("openaiBaseUrl")) $("openaiBaseUrl").value = state.provider.baseUrl || DEFAULT_OPENAI_BASE;
+      if ($("openaiApiKey")) $("openaiApiKey").value = state.provider.apiKey || "";
+      fillTfModelSelect(state.provider.kind === "transformers" ? (state.provider.model || TF_DEFAULT_MODEL) : (state.provider.model || TF_DEFAULT_MODEL));
+      fillModelSelect(
+        state.openaiModels.length ? state.openaiModels : (state.provider.model ? [state.provider.model] : []),
+        state.provider.model
+      );
+      const brand = $("brandSub") || document.querySelector(".brand span");
+      if (brand) {
+        brand.textContent = kind === "openai"
+          ? (state.provider.model || "OpenAI-compatible")
+          : kind === "transformers"
+            ? (state.provider.model || "Transformers.js")
+            : "Chrome on-device";
+      }
+      // Attach is available for OpenAI-compatible and Transformers.js.
+      if ($("attachBtn")) $("attachBtn").hidden = (kind === "openai" || kind === "transformers") ? false : !state.multimodal;
+      if (input) input.placeholder = kind === "openai"
+        ? `Message ${state.provider.model || "local model"}`
+        : kind === "transformers"
+          ? `Message ${state.provider.model || "Transformers.js model"}`
+          : "Message Nano Chat";
+    }
+    function applyProviderKind(kind, { persistNow = true } = {}) {
+      if (kind !== "nano" && kind !== "openai" && kind !== "transformers") return;
+      if (state.provider.kind === kind) { syncProviderUI(); return; }
+      destroySession();
+      state.provider.kind = kind;
+      syncProviderUI();
+      if (persistNow) persist();
+      if (kind === "openai") {
+        $("consentCard").classList.remove("show");
+        showDownloadProgress(false);
+        setStatus("ready", state.provider.model || "External");
+        if (!state.openaiModels.length) refreshOpenAIModels({ silent: true }).catch(() => {});
+      } else if (kind === "transformers") {
+        $("consentCard").classList.remove("show");
+        showDownloadProgress(false);
+        setStatus("ready", state.provider.model || "Transformers.js");
+      } else {
+        bootNanoStatus();
+      }
+    }
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
     }
@@ -1005,7 +1922,11 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         <div class="empty">
           <div class="mark" style="margin:0 auto;width:40px;height:40px"><i data-lucide="message-circle" width="18" height="18"></i></div>
           <h2>How can I help you?</h2>
-          <p>On-device Gemini Nano via Chrome’s Prompt API. Chats stay in this browser.</p>
+          <p id="emptyBlurb">${isOpenAIProvider()
+            ? `Local model · ${escapeHtml(state.provider.model || "pick a model in Settings")}`
+            : isTransformersProvider()
+              ? `Transformers.js · ${escapeHtml(state.provider.model || "pick a model in Settings")}`
+              : "Chrome’s on-device Prompt API, or switch providers in Settings."}</p>
           <div class="chips">
             <button class="chip" data-prompt="Explain Chrome’s Prompt API in two short paragraphs.">What is the Prompt API?</button>
             <button class="chip" data-prompt="Give me 5 ideas for a weekend project I can finish in an afternoon.">Weekend project ideas</button>
@@ -1017,6 +1938,17 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         </div>`;
       icons(thread);
     }
+    function reasoningBlock(msg) {
+      if (!msg.reasoning) return "";
+      const open = msg.streaming && !msg.content ? " open" : "";
+      const streaming = msg.streaming && !msg.content ? " streaming" : "";
+      return `<details class="reasoning${streaming}"${open}><summary>Thinking</summary><div class="reasoning-body">${escapeHtml(msg.reasoning)}</div></details>`;
+    }
+    function genuiFromTool(msg) {
+      const cfg = msg?.tool?.genui;
+      if (!cfg || cfg.type !== "clock") return "";
+      return genuiClockHtml(cfg);
+    }
     function messageEl(msg) {
       const wrap = document.createElement("article");
       wrap.className = "msg col " + msg.role;
@@ -1026,14 +1958,24 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
           <div class="prose">${renderMarkdown(msg.content || "")}</div>
           ${metaLine(msg)}
           <button class="copy" type="button" data-copy="${msg.id}" title="Copy"><i data-lucide="copy" width="13" height="13"></i></button>
+          <button class="speak" type="button" data-speak="${msg.id}" title="Read aloud"><i data-lucide="volume-2" width="13" height="13"></i></button>
         </div>` : `
         <div class="avatar"><i data-lucide="sparkles" width="14" height="14"></i></div>
         <div class="bubble">
           ${toolChip(msg)}
           ${toolDebugBlock(msg)}
-          <div class="prose ${msg.streaming ? "streaming" : ""}">${renderMarkdown(msg.content || (msg.streaming ? "" : "…"))}</div>
+          ${reasoningBlock(msg)}
+          ${genuiFromTool(msg)}
+          <div class="prose ${msg.streaming ? "streaming" : ""}">${renderMarkdown((() => {
+            let body = msg.content || (msg.streaming && !msg.reasoning ? "" : (!msg.content && !msg.reasoning ? "…" : ""));
+            if (msg.tool?.genui?.type === "clock" && body) {
+              body = body.replace(/```genui(?:\s+clock)?\s*\n[\s\S]*?```/gi, "").trim();
+            }
+            return body;
+          })())}</div>
           ${metaLine(msg)}
           <button class="copy" type="button" data-copy="${msg.id}" title="Copy"><i data-lucide="copy" width="13" height="13"></i></button>
+          <button class="speak" type="button" data-speak="${msg.id}" title="Read aloud"><i data-lucide="volume-2" width="13" height="13"></i></button>
         </div>`;
       if (msg.imageUrl) {
         const img = document.createElement("img");
@@ -1045,6 +1987,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         err.className = "err"; err.textContent = msg.error;
         wrap.querySelector(".bubble").appendChild(err);
       }
+      tickGenUIClocks(wrap);
       return wrap;
     }
     function renderThread() {
@@ -1071,6 +2014,10 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       state.session = null;
       updateContext();
     }
+    // Call after system/tool prompt changes so Nano does not keep a stale tool catalog in context.
+    function bumpSession() {
+      destroySession();
+    }
     function newChat() {
       destroySession();
       const chat = blankChat();
@@ -1080,6 +2027,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     }
     async function switchChat(id) {
       if (id === state.activeId) return;
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
       destroySession();
       state.activeId = id;
       persist(); renderSidebar(); renderThread(); updateContext();
@@ -1127,29 +2075,60 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       if (!chat || chat.named || state.naming.has(chatId)) return;
       const snippet = String(firstMessage || "").replace(/\s+/g, " ").trim();
       if (!snippet) return;
-      const LM = api();
-      if (!LM || state.availability === "unavailable") return;
       state.naming.add(chatId);
-      let namer = null;
       try {
-        const options = {
-          expectedInputs: [{ type: "text", languages: ["en"] }],
-          expectedOutputs: [{ type: "text", languages: ["en"] }],
-          initialPrompts: [{ role: "system", content: TITLE_SYSTEM }],
-        };
-        if (state.params) {
-          options.temperature = Math.min(0.3, Number(state.params.maxTemperature) || 0.3);
-          options.topK = Math.min(8, Number(state.params.maxTopK) || 8);
+        if (isOpenAIProvider()) {
+          const base = normalizeOpenAIBase(state.provider.baseUrl);
+          const model = state.provider.model;
+          if (!model) return;
+          const res = await fetch(`${base}/chat/completions`, {
+            method: "POST",
+            headers: openaiHeaders(),
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: "system", content: TITLE_SYSTEM },
+                { role: "user", content: `Write a chat title for this first message:\n\n${snippet.slice(0, 800)}` },
+              ],
+              temperature: 0.3,
+              max_tokens: 24,
+            }),
+            signal: AbortSignal.timeout(20000),
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          applyGeneratedTitle(chatId, cleanTitle(data?.choices?.[0]?.message?.content || ""));
+          return;
         }
-        namer = await LM.create(options);
-        const raw = await namer.prompt(
-          `Write a chat title for this first message:\n\n${snippet.slice(0, 800)}`
-        );
-        applyGeneratedTitle(chatId, cleanTitle(raw));
+        if (isTransformersProvider()) {
+          const fallback = snippet.split(/\s+/).slice(0, 6).join(" ").replace(/[.!?]+$/g, "");
+          applyGeneratedTitle(chatId, cleanTitle(fallback));
+          return;
+        }
+        const LM = api();
+        if (!LM || state.availability === "unavailable") return;
+        let namer = null;
+        try {
+          const options = {
+            expectedInputs: [{ type: "text", languages: ["en"] }],
+            expectedOutputs: [{ type: "text", languages: ["en"] }],
+            initialPrompts: [{ role: "system", content: TITLE_SYSTEM }],
+          };
+          if (state.params) {
+            options.temperature = Math.min(0.3, Number(state.params.maxTemperature) || 0.3);
+            options.topK = Math.min(8, Number(state.params.maxTopK) || 8);
+          }
+          namer = await LM.create(options);
+          const raw = await namer.prompt(
+            `Write a chat title for this first message:\n\n${snippet.slice(0, 800)}`
+          );
+          applyGeneratedTitle(chatId, cleanTitle(raw));
+        } finally {
+          if (namer?.destroy) { try { namer.destroy(); } catch {} }
+        }
       } catch {
         // Keep the placeholder title from the first message.
       } finally {
-        if (namer?.destroy) { try { namer.destroy(); } catch {} }
         state.naming.delete(chatId);
       }
     }
@@ -1168,25 +2147,14 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       destroySession(); persist(); renderSidebar(); renderThread(); updateContext();
     }
     function mcpToolsSystemBlock() {
-      if (!state.toolsInChat || !state.sidecar.available) return "";
-      const tools = activeToolDefs();
-      if (!tools.length) return "";
-      const lines = tools.map((t) => `- ${t.name}: ${t.description || "—"}`);
+      if (!state.toolsInChat) return "";
+      if (!activeToolDefs().length) return "";
+      // Do not list tool names here — small models copy them as fake function calls in the reply.
+      // Routing is handled by planToolCall; this only prepares the chat model for injected results.
       return [
         "",
-        "## MCP tools (connected sidecar)",
-        "Tools may run automatically before you see the user message. When tool output is injected, answer from that data.",
-        "",
-        "Available:",
-        ...lines,
-        "",
-        "Workflows:",
-        "- Web content from a URL: navigate opens a background tab, then take_snapshot returns page text — summarize it.",
-        "- Current browser tab: take_snapshot only.",
-        "- execute_code: run code in the isolated sidecar container (python [default], javascript/Node, shell). Python has numpy, pandas, matplotlib, requests, beautifulsoup4, lxml. When the user asks to run, execute, or test code — the app runs it here; never refuse.",
-        "- screenshot: visual capture of the page.",
-        "",
-        "Formatting: use [label](url) for links; never dump raw long URLs on their own line.",
+        "## Tool results",
+        "The app may run tools and inject their output into the user turn before you reply. Treat that data as ground truth. Answer the user naturally — do not invent tool calls, function syntax, or pretend to invoke tools yourself.",
       ].join("\n");
     }
     function buildSystemPrompt() {
@@ -1243,9 +2211,25 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       if (!active) $("downloadBar").style.width = "0";
     }
     async function ensureSession() {
+      if (isOpenAIProvider()) {
+        if (state.session?.provider === "openai" && state.session.model === state.provider.model) return state.session;
+        state.session = createOpenAISession();
+        setStatus("ready", state.provider.model || "Ready");
+        updateContext();
+        return state.session;
+      }
+      if (isTransformersProvider()) {
+        const tfModel = pickTfModel();
+        if (state.session?.provider === "transformers" && state.session.model === tfModel) return state.session;
+        state.session = createTransformersSession();
+        setStatus("ready", tfModel || "Transformers.js");
+        updateContext();
+        return state.session;
+      }
       const LM = api();
       if (!LM) throw new Error("Chrome Prompt API is not available in this browser.");
-      if (state.session) return state.session;
+      if (state.session?.provider === "nano") return state.session;
+      if (state.session?.provider && state.session.provider !== "nano") state.session = null;
       const options = sessionOptions();
       let availability = "available";
       if (typeof LM.availability === "function") {
@@ -1253,7 +2237,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         if (availability === "unavailable" && state.multimodal) { setMultimodal(false); return ensureSession(); }
       }
       state.availability = availability;
-      if (availability === "unavailable") throw new Error("Gemini Nano is unavailable on this device or origin.");
+      if (availability === "unavailable") throw new Error("Chrome’s on-device model is unavailable on this device or origin.");
       if (availability === "downloadable" && !state.downloadConsent) {
         const err = new Error("DOWNLOAD_REQUIRED"); err.code = "DOWNLOAD_REQUIRED"; throw err;
       }
@@ -1267,7 +2251,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
           m.addEventListener("downloadprogress", (e) => {
             const pct = Math.round((Number(e.loaded) || 0) * 100);
             $("downloadBar").style.width = pct + "%";
-            $("downloadLabel").textContent = pct >= 100 ? "Unpacking the model into memory…" : `Downloaded ${pct}% of Gemini Nano.`;
+            $("downloadLabel").textContent = pct >= 100 ? "Unpacking the model into memory…" : `Downloaded ${pct}% of the on-device model.`;
           });
         },
       };
@@ -1284,6 +2268,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
           showBanner("Started a text-only session. " + (err.message || ""));
         }
       }
+      if (state.session) state.session.provider = "nano";
       showDownloadProgress(false);
       $("consentCard").classList.remove("show");
       setStatus("ready", "Ready");
@@ -1320,8 +2305,8 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     async function send(text, imageFile) {
       const content = (text || "").trim();
       if ((!content && !imageFile) || state.busy) return;
-      if (imageFile && !state.multimodal) { showBanner("Image prompts are not available. This Chrome model is text-only."); return; }
-      if (!state.session && state.availability === "downloadable" && !state.downloadConsent) {
+      if (isNanoProvider() && imageFile && !state.multimodal) { showBanner("Image prompts are not available. This Chrome model is text-only."); return; }
+      if (isNanoProvider() && !state.session && state.availability === "downloadable" && !state.downloadConsent) {
         state.pendingSend = { text: content, image: imageFile };
         $("consentModal").showModal(); return;
       }
@@ -1340,13 +2325,10 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       try {
         const session = await ensureSession();
         let toolUse = null;
-        if (state.toolsInChat && content && !imageFile && state.sidecar.available) {
+        if (state.toolsInChat && content && !imageFile && activeToolDefs().length) {
           let plan = null;
           try {
             plan = await planToolCall(content);
-            if (!plan && wantsCodeExecution(content)) {
-              plan = { tool: "execute_code", language: "python", code: "", query: content };
-            }
             if (plan?.tool === "execute_code" && !looksLikeSource(plan.code)) {
               setStatus("busy", "Generating code");
               const generated = await generateExecCode(content, plan.language || "python");
@@ -1359,14 +2341,6 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
               const toolChain = [];
               toolUse = await runChatTool(plan, content);
               if (toolUse) toolChain.push({ name: toolUse.name, args: toolUse.args, output: toolUse.text });
-              if (toolUse?.name === "navigate" && wantsSiteContent(content)) {
-                const navigateUrl = toolUse.args?.url;
-                const snapUse = await runChatTool({ tool: "take_snapshot" }, content);
-                if (snapUse?.text) {
-                  toolChain.push({ name: snapUse.name, args: snapUse.args, output: snapUse.text });
-                  toolUse = { ...snapUse, navigateUrl };
-                }
-              }
               assistantMsg.tool = toolUse
                 ? toolSnapshotFromUse(toolUse, {
                   navigateUrl: toolUse.navigateUrl,
@@ -1389,10 +2363,22 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
           promptInput = formatToolPrompt(toolUse, content);
         }
         if (imageFile) {
-          promptInput = [{ role: "user", content: [
-            { type: "text", value: content || "Describe this image." },
-            { type: "image", value: await toImageValue(imageFile) },
-          ] }];
+          if (isOpenAIProvider()) {
+            promptInput = {
+              role: "user",
+              content: [
+                { type: "text", text: content || "Describe this image." },
+                { type: "image_url", image_url: { url: await fileToDataUrl(imageFile) } },
+              ],
+            };
+          } else if (isTransformersProvider()) {
+            promptInput = { text: content || "Describe this image.", imageBlob: imageFile };
+          } else {
+            promptInput = [{ role: "user", content: [
+              { type: "text", value: content || "Describe this image." },
+              { type: "image", value: await toImageValue(imageFile) },
+            ] }];
+          }
         }
         const usageBefore = sessionUsage(session).used;
         let measured = null;
@@ -1404,7 +2390,15 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         const collect = accumulate();
         if (typeof session.promptStreaming === "function") {
           const stream = session.promptStreaming(promptInput, { signal: state.abort.signal });
-          for await (const chunk of stream) { assistantMsg.content = collect(chunk); upsertMessage(assistantMsg); }
+          for await (const chunk of stream) {
+            if (typeof chunk === "string") {
+              assistantMsg.content = collect(chunk);
+            } else if (chunk && typeof chunk === "object") {
+              if (chunk.reasoning) assistantMsg.reasoning = (assistantMsg.reasoning || "") + chunk.reasoning;
+              if (chunk.content) assistantMsg.content = collect(chunk.content);
+            }
+            upsertMessage(assistantMsg);
+          }
         } else {
           assistantMsg.content = await session.prompt(promptInput, { signal: state.abort.signal });
           upsertMessage(assistantMsg);
@@ -1440,6 +2434,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       } finally {
         assistantMsg.streaming = false;
         if (thread.querySelector(`[data-id="${assistantMsg.id}"]`)) upsertMessage(assistantMsg);
+        if (!assistantMsg.error && assistantMsg.content) autoReadIfEnabled(assistantMsg);
         state.busy = false; state.abort = null; sendBtn.disabled = false; stopBtn.hidden = true;
         if (!assistantMsg.error) setStatus(state.session ? "ready" : "down", state.session ? "Ready" : $("statusText").textContent);
         updateContext(); persist(); renderSidebar();
@@ -1452,7 +2447,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     }
     function setImage(file) {
       if (!file || !file.type.startsWith("image/")) return;
-      if (!state.multimodal) { showBanner("Image prompts are not available on this Chrome build."); return; }
+      if (isNanoProvider() && !state.multimodal) { showBanner("Image prompts are not available on this Chrome build."); return; }
       state.image = file; pendingThumb.src = URL.createObjectURL(file); pendingImage.classList.add("show");
     }
     function helpHtml(availability) {
@@ -1530,12 +2525,16 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
           : (state.sidecar.error ? JSON.stringify({ error: state.sidecar.error }, null, 2) : "—");
       }
       const enabled = state.sidecar.tools.filter((t) => !draftDisabled.includes(toolKey(t.name))).length;
-      lists.innerHTML = state.sidecar.available
+      const localHtml = `<div class="tool-group">
+            <h4>Built-in · ${LOCAL_TOOLS.filter((t) => !draftDisabled.includes(toolKey(t.name))).length}/${LOCAL_TOOLS.length} on</h4>
+            ${toolCatalog(LOCAL_TOOLS, draftDisabled, toolsOn)}
+          </div>`;
+      lists.innerHTML = localHtml + (state.sidecar.available
         ? `<div class="tool-group">
             <h4>MCP tools · ${enabled}/${state.sidecar.tools.length} on</h4>
             ${toolCatalog(state.sidecar.tools, draftDisabled, toolsOn)}
           </div>`
-        : `<p class="field-hint">Start the sidecar to see MCP tools here.</p>`;
+        : `<p class="field-hint">Start the sidecar to see MCP tools here.</p>`);
     }
     function readToolPanelDraft() {
       const disabled = [];
@@ -1545,14 +2544,18 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       return disabled;
     }
     function activeToolDefs() {
-      if (!state.toolsInChat || !state.sidecar.available) return [];
-      return state.sidecar.tools
-        .filter((t) => !isToolDisabled(t.name))
-        .map((tool) => ({
-          name: tool.name,
-          description: tool.description || "",
-          inputSchema: tool.inputSchema || { type: "object", properties: {} },
-        }));
+      if (!state.toolsInChat) return [];
+      const local = LOCAL_TOOLS.filter((t) => !isToolDisabled(t.name));
+      const remote = state.sidecar.available
+        ? state.sidecar.tools
+          .filter((t) => !isToolDisabled(t.name))
+          .map((tool) => ({
+            name: tool.name,
+            description: tool.description || "",
+            inputSchema: tool.inputSchema || { type: "object", properties: {} },
+          }))
+        : [];
+      return [...local, ...remote];
     }
     async function probeSidecar(url = state.sidecarUrl) {
       const base = (url || DEFAULT_SIDECAR_URL).replace(/\/$/, "");
@@ -1578,14 +2581,6 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       if ($("settingsModal")?.open && settingsDraft) renderToolPanel(settingsDraft.disabledTools);
       refreshDebug();
       return state.sidecar.available;
-    }
-    function wantsSiteContent(text) {
-      return /read|text|content|summar|headline|article|what'?s on|tell me|extract|scrape|news|snapshot|page/i.test(String(text || ""));
-    }
-    function wantsCodeExecution(text) {
-      const s = String(text || "");
-      return /\b(run|execute|eval(?:uate)?)\b[\s\S]{0,80}\b(code|script|python|numpy|pandas|javascript|shell)\b/i.test(s)
-        || /\b(code execution|execute_code)\b/i.test(s);
     }
     function looksLikeSource(code) {
       const s = String(code || "").trim();
@@ -1709,8 +2704,18 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
           `User: ${userQuestion}`,
         ].join("\n");
       }
+      if (toolUse.name === "get_time") {
+        let info = {};
+        try { info = JSON.parse(toolUse.text); } catch {}
+        return [
+          `Current time tool result: ${info.time12 || "—"} in ${info.place || info.timezone || "local"} on ${info.dateLong || "—"}.`,
+          "A live clock for that timezone is already shown in the UI.",
+          "Answer the user in one or two short sentences. Do not dump JSON or invent tool calls.",
+          `User: ${userQuestion}`,
+        ].join("\n");
+      }
       return [
-        `An MCP tool named ${toolUse.name} returned this data:`,
+        `Tool ${toolUse.name} returned this data:`,
         data,
         "",
         footer,
@@ -1779,6 +2784,9 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     async function runChatTool(plan, question) {
       const def = activeToolDefs().find((d) => d.name === plan.tool);
       if (!def) return null;
+      if (def.local || LOCAL_TOOLS.some((t) => t.name === plan.tool)) {
+        return runLocalTool(plan);
+      }
       const base = (state.sidecarUrl || DEFAULT_SIDECAR_URL).replace(/\/$/, "");
       const args = sidecarArgs(def, plan, question);
       const res = await fetch(`${base}/call`, {
@@ -1808,56 +2816,94 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       if (start < 0 || end <= start) return null;
       try { return JSON.parse(body.slice(start, end + 1)); } catch { return null; }
     }
-    async function planToolCall(question) {
-      const LM = api();
-      if (!LM) return null;
-      const defs = activeToolDefs();
+    function plannerSystemPrompt(defs) {
       const catalog = defs.map((d) => `- ${d.name}: ${d.description}`).join("\n");
-      const system = [
-        'Route the user message to at most one MCP tool. Reply with JSON only: {"tool":"<name or none>","query":"<short hint>","url":"<full URL if navigate>","code":"<full source if execute_code>","language":"<python|javascript|shell if execute_code>"}.',
-        'Choose "none" for chit-chat, opinions, writing help, or explaining code without running it.',
-        'Choose execute_code when the user asks to RUN, EXECUTE, or TEST code — include full runnable source in "code" with print()/calls so stdout is captured.',
-        "",
-        "Web fetch workflow (the app may run step 2 automatically after navigate):",
-        "1. navigate — open a URL in a new background tab (your current tab stays active).",
-        "2. take_snapshot — read the current page from the accessibility tree (headlines, links, text).",
-        "",
-        "Code execution:",
-        "- execute_code — run code in the isolated sidecar container. Languages: python (default), javascript (Node), shell. Python includes numpy, pandas, matplotlib, requests, beautifulsoup4, lxml.",
-        "- User says run/execute/test code → execute_code with code that CALLS functions and uses print(). Definitions alone produce no stdout.",
-        "",
-        "Routing rules:",
-        "- Run/execute/test code (including numpy, pandas, complex scripts) → execute_code with code and language.",
-        "- URL + read/summarize/headlines/news → navigate with the full https URL (app will take_snapshot next).",
-        "- Current page / this tab / no URL → take_snapshot.",
-        "- Calculate, parse JSON/text, run a script, transform data → execute_code with code and language.",
-        "- Visit-only (open/go to URL, no reading) → navigate.",
-        "- Visual capture → screenshot.",
-        "",
-        "Examples:",
-        '- "Summarize bbc.com/news" → {"tool":"navigate","url":"https://www.bbc.com/news"}',
-        '- "What\'s on this page?" → {"tool":"take_snapshot"}',
-        '- "Run complex numpy code" → {"tool":"execute_code","language":"python","code":"import numpy as np\\n..."}',
-        '- "Parse this JSON and sum the values" → {"tool":"execute_code","language":"python","code":"..."}',
-        '- "Open example.com" → {"tool":"navigate","url":"https://example.com"}',
+      return [
+        "You are a tool router. Choose exactly one tool from the catalog, or none.",
+        'After any private thinking, your final message content must be JSON only: {"tool":"<name or none>"}.',
+        "Include optional fields only when needed (timezone, place, url, code, language, query).",
+        'Default to {"tool":"none"} unless the user clearly needs a listed tool. When unsure, choose none.',
+        "Use a tool only when the user explicitly requests information or actions that require that exact tool.",
+        "If the question can be answered from general knowledge without real-time lookup or external actions, choose none.",
         "",
         "Tools:",
-        catalog,
+        catalog || "(none)",
       ].join("\n");
+    }
+    function planFromParsed(parsed, defs) {
+      const name = String(parsed?.tool || "none");
+      if (name === "none" || !defs.some((d) => d.name === name)) return null;
+      return {
+        tool: name,
+        query: String(parsed?.query || "").trim(),
+        timezone: String(parsed?.timezone || parsed?.place || "").trim(),
+        place: String(parsed?.place || "").trim(),
+        url: String(parsed?.url || "").trim(),
+        code: String(parsed?.code || "").trim(),
+        language: String(parsed?.language || "").trim(),
+        fn: String(parsed?.fn || parsed?.script || "").trim(),
+        script: String(parsed?.script || parsed?.fn || "").trim(),
+      };
+    }
+    function plannerRawFromMessage(msg) {
+      // Reasoning models (e.g. Gemma 4) may put JSON in content after thinking,
+      // or only in reasoning/thinking if truncated — try content first.
+      const parts = [
+        msg?.content,
+        msg?.reasoning,
+        msg?.reasoning_content,
+        msg?.thinking,
+      ].map((x) => String(x || "").trim()).filter(Boolean);
+      for (const part of parts) {
+        const parsed = parseToolDirective(part);
+        if (parsed?.tool) return part;
+      }
+      return parts[0] || "";
+    }
+    async function planToolCallViaOpenAI(question, defs) {
+      const base = normalizeOpenAIBase(state.provider.baseUrl);
+      const model = state.provider.model;
+      if (!model) return null;
+      const res = await fetch(`${base}/chat/completions`, {
+        method: "POST",
+        headers: openaiHeaders(),
+        body: JSON.stringify({
+          model,
+          temperature: 0,
+          // Reasoning models spend tokens on thinking before the JSON answer.
+          max_tokens: 400,
+          messages: [
+            { role: "system", content: plannerSystemPrompt(defs) },
+            { role: "user", content: question },
+          ],
+        }),
+        signal: AbortSignal.timeout(60000),
+      });
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => ({}));
+      const raw = plannerRawFromMessage(data?.choices?.[0]?.message);
+      return planFromParsed(parseToolDirective(raw), defs);
+    }
+    async function planToolCallViaPromptAPI(question, defs) {
+      const LM = api();
+      if (!LM) return null;
       let session = null;
       try {
         session = await LM.create({
           expectedInputs: [{ type: "text", languages: ["en"] }],
           expectedOutputs: [{ type: "text", languages: ["en"] }],
-          initialPrompts: [{ role: "system", content: system }],
+          initialPrompts: [{ role: "system", content: plannerSystemPrompt(defs) }],
           topK: 1,
           temperature: 0,
         });
+        // "none" first — constrained decoding on small models often biases toward enum[0].
         const schema = {
           type: "object",
           properties: {
-            tool: { type: "string", enum: [...defs.map((d) => d.name), "none"] },
+            tool: { type: "string", enum: ["none", ...defs.map((d) => d.name)] },
             query: { type: "string" },
+            timezone: { type: "string" },
+            place: { type: "string" },
             url: { type: "string" },
             code: { type: "string" },
             language: { type: "string", enum: ["python", "javascript", "shell"] },
@@ -1869,31 +2915,29 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         let raw = "";
         try { raw = await session.prompt(question, { responseConstraint: schema }); }
         catch { raw = await session.prompt(question); }
-        const parsed = parseToolDirective(raw);
-        const name = String(parsed?.tool || "none");
-        if (name === "none" || !defs.some((d) => d.name === name)) return null;
-        return {
-          tool: name,
-          query: String(parsed?.query || "").trim(),
-          url: String(parsed?.url || "").trim(),
-          code: String(parsed?.code || "").trim(),
-          language: String(parsed?.language || "").trim(),
-          fn: String(parsed?.fn || parsed?.script || "").trim(),
-          script: String(parsed?.script || parsed?.fn || "").trim(),
-        };
+        return planFromParsed(parseToolDirective(raw), defs);
       } catch {
         return null;
       } finally {
         if (session?.destroy) { try { session.destroy(); } catch {} }
       }
     }
-    async function boot() {
-      load(); renderSidebar(); renderThread(); icons(); setDebug(state.debug);
-      $("helpBox").innerHTML = helpHtml("checking");
+    async function planToolCall(question) {
+      const defs = activeToolDefs();
+      if (!defs.length) return null;
+      if (isTransformersProvider()) return null;
+      // Always plan with the active chat provider — previously Gemma chat still routed via Nano.
+      if (isOpenAIProvider()) {
+        try { return await planToolCallViaOpenAI(question, defs); }
+        catch { return null; }
+      }
+      return planToolCallViaPromptAPI(question, defs);
+    }
+    async function bootNanoStatus() {
       const LM = api();
       if (!LM) {
         setStatus("bad", "Unsupported");
-        showBanner("Chrome’s Prompt API was not found. Open this in Chrome 148+ over localhost.");
+        showBanner("Chrome’s Prompt API was not found. Switch to OpenAI-compatible in Settings → Models, or open this in Chrome 148+ over localhost.");
         $("helpBox").innerHTML = helpHtml("unavailable");
         return;
       }
@@ -1918,11 +2962,29 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         }
         state.availability = availability;
         $("helpBox").innerHTML = helpHtml(availability);
-        if (availability === "unavailable") { setStatus("bad", "Unavailable"); showBanner("Gemini Nano is not available here."); }
+        if (availability === "unavailable") { setStatus("bad", "Unavailable"); showBanner("Chrome’s on-device model is not available here. Switch to OpenAI-compatible in Settings → Models."); }
         else if (availability === "downloadable") { setStatus("down", "Needs download"); $("consentCard").classList.add("show"); }
         else if (availability === "downloading") { setStatus("down", "Downloading"); showDownloadProgress(true); }
         else setStatus("ready", "Ready");
       } catch (err) { setStatus("bad", "Error"); showBanner(err.message || String(err)); }
+    }
+    async function boot() {
+      load(); destroySession(); renderSidebar(); renderThread(); icons(); setDebug(state.debug);
+      syncProviderUI();
+      $("helpBox").innerHTML = helpHtml("checking");
+      if (isOpenAIProvider()) {
+        $("consentCard").classList.remove("show");
+        setStatus("ready", state.provider.model || "External");
+        refreshOpenAIModels({ silent: true }).catch(() => {
+          setStatus("down", "Endpoint?");
+        });
+      } else if (isTransformersProvider()) {
+        $("consentCard").classList.remove("show");
+        showDownloadProgress(false);
+        setStatus("ready", state.provider.model || "Transformers.js");
+      } else {
+        await bootNanoStatus();
+      }
       await probeSidecar();
       refreshDebug();
     }
@@ -1974,6 +3036,12 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     thread.addEventListener("click", async (e) => {
       const chip = e.target.closest("[data-prompt]");
       if (chip) { send(chip.dataset.prompt); return; }
+      const speakBtn = e.target.closest("[data-speak]");
+      if (speakBtn) {
+        const m = messages().find((x) => x.id === speakBtn.dataset.speak);
+        if (m?.content) toggleSpeak(m.id, m.content, speakBtn);
+        return;
+      }
       const copy = e.target.closest("[data-copy]");
       if (!copy) return;
       const msg = messages().find((m) => m.id === copy.dataset.copy);
@@ -1982,12 +3050,20 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     let settingsDraft = null;
     let settingsTab = "general";
     function setSettingsTab(tab) {
-      settingsTab = tab === "mcp" ? "mcp" : "general";
+      settingsTab = tab === "mcp" ? "mcp" : tab === "models" ? "models" : "general";
       $("settingsTabGeneral").setAttribute("aria-selected", settingsTab === "general" ? "true" : "false");
+      $("settingsTabModels").setAttribute("aria-selected", settingsTab === "models" ? "true" : "false");
       $("settingsTabMcp").setAttribute("aria-selected", settingsTab === "mcp" ? "true" : "false");
       $("settingsGeneral").hidden = settingsTab !== "general";
+      $("settingsModels").hidden = settingsTab !== "models";
       $("settingsMcp").hidden = settingsTab !== "mcp";
       if (settingsTab === "mcp" && settingsDraft) renderToolPanel(settingsDraft.disabledTools);
+      if (settingsTab === "models" && ($("providerKind")?.value === "openai")) {
+        refreshOpenAIModels({ silent: true }).catch(() => {});
+      }
+      if (settingsTab === "models" && ($("providerKind")?.value === "transformers")) {
+        fillTfModelSelect(state.provider.model || TF_DEFAULT_MODEL);
+      }
     }
     function openSettings(tab = "general") {
       settingsDraft = {
@@ -1998,11 +3074,18 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         toolsInChat: state.toolsInChat,
         sidecarUrl: state.sidecarUrl,
         disabledTools: [...state.disabledTools],
+        tts: { ...state.tts },
+        provider: { ...state.provider },
       };
       $("systemPrompt").value = state.system;
       $("debugToggle").checked = state.debug;
+      $("autoReadToggle").checked = state.tts.autoRead;
+      $("voiceRate").value = state.tts.rate;
+      $("rateValue").textContent = Number(state.tts.rate).toFixed(1) + "×";
+      loadVoices();
       $("toolsToggle").checked = state.toolsInChat;
       $("sidecarUrl").value = state.sidecarUrl || DEFAULT_SIDECAR_URL;
+      syncProviderUI();
       setSettingsTab(tab);
       renderToolPanel(settingsDraft.disabledTools);
       $("settingsModal").showModal();
@@ -2018,6 +3101,16 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       $("tempValue").textContent = settingsDraft.temperature;
       $("topKValue").textContent = settingsDraft.topK;
       setDebug(settingsDraft.debug);
+      if (settingsDraft.tts) {
+        $("autoReadToggle").checked = settingsDraft.tts.autoRead;
+        $("voiceRate").value = settingsDraft.tts.rate;
+        $("rateValue").textContent = Number(settingsDraft.tts.rate).toFixed(1) + "×";
+        $("voiceSelect").value = settingsDraft.tts.voiceURI || "";
+      }
+      if (settingsDraft.provider) {
+        state.provider = { ...settingsDraft.provider };
+        syncProviderUI();
+      }
       $("toolsToggle").checked = settingsDraft.toolsInChat;
       $("sidecarUrl").value = settingsDraft.sidecarUrl || DEFAULT_SIDECAR_URL;
       setSettingsTab("general");
@@ -2030,17 +3123,69 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       state.toolsInChat = $("toolsToggle").checked;
       state.sidecarUrl = ($("sidecarUrl").value || DEFAULT_SIDECAR_URL).trim();
       state.disabledTools = readToolPanelDraft();
+      state.tts.autoRead = $("autoReadToggle").checked;
+      state.tts.voiceURI = $("voiceSelect").value || "";
+      state.tts.rate = parseFloat($("voiceRate").value) || 1;
+      const selectedProvider = $("providerKind").value;
+      const nextKind = selectedProvider === "openai" ? "openai" : selectedProvider === "transformers" ? "transformers" : "nano";
+      state.provider.kind = nextKind;
+      state.provider.baseUrl = normalizeOpenAIBase($("openaiBaseUrl").value || DEFAULT_OPENAI_BASE);
+      state.provider.apiKey = ($("openaiApiKey").value || "").trim();
+      state.provider.model = nextKind === "openai"
+        ? ($("openaiModel").value || "").trim()
+        : ($("tfModel").value || TF_DEFAULT_MODEL).trim();
       settingsDraft = null;
       persist();
       destroySession();
+      syncProviderUI();
       probeSidecar();
       $("settingsModal").close();
-      setStatus("ready", "Restarted");
+      if (isOpenAIProvider()) {
+        setStatus("ready", state.provider.model || "External");
+        refreshOpenAIModels({ silent: true }).catch(() => setStatus("down", "Endpoint?"));
+      } else if (isTransformersProvider()) {
+        setStatus("ready", state.provider.model || "Transformers.js");
+      } else {
+        setStatus("ready", "Restarted");
+        bootNanoStatus();
+      }
+      if (!messages().length) renderThread();
     }
 
     $("settingsBtn").addEventListener("click", () => openSettings("general"));
     $("settingsTabGeneral").addEventListener("click", () => setSettingsTab("general"));
+    $("settingsTabModels").addEventListener("click", () => setSettingsTab("models"));
     $("settingsTabMcp").addEventListener("click", () => setSettingsTab("mcp"));
+    $("headerProvider").addEventListener("change", (e) => {
+      applyProviderKind(e.target.value);
+      if (!messages().length) renderThread();
+    });
+    $("providerKind").addEventListener("change", () => {
+      const kind = $("providerKind").value;
+      $("openaiFields").hidden = kind !== "openai";
+      $("transformersFields").hidden = kind !== "transformers";
+      if (kind === "openai") refreshOpenAIModels({ silent: true }).catch(() => {});
+      if (kind === "transformers") {
+        if ($("tfModel")) fillTfModelSelect(state.provider.model || TF_DEFAULT_MODEL);
+      }
+    });
+    $("refreshModels").addEventListener("click", () => {
+      refreshOpenAIModels().catch(() => {});
+    });
+    $("clearTfCache")?.addEventListener("click", async () => {
+      const btn = $("clearTfCache");
+      if (btn) { btn.disabled = true; btn.textContent = "Clearing…"; }
+      try {
+        await clearTransformersCache();
+      } catch (err) {
+        setTfStatus("bad", `Clear cache failed: ${err?.message || String(err)}`);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Clear cache";
+        }
+      }
+    });
     $("refreshSidecar").addEventListener("click", async () => {
       const url = ($("sidecarUrl").value || DEFAULT_SIDECAR_URL).trim();
       const base = url.replace(/\/$/, "");
@@ -2070,6 +3215,14 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       $("copyDebug").textContent = "Copied";
       setTimeout(() => { $("copyDebug").textContent = "Copy JSON"; }, 1400);
     });
+    $("voiceRate").addEventListener("input", () => { $("rateValue").textContent = Number($("voiceRate").value).toFixed(1) + "×"; });
+    $("testVoice").addEventListener("click", () => {
+      const prevURI = state.tts.voiceURI, prevRate = state.tts.rate;
+      state.tts.voiceURI = $("voiceSelect").value || "";
+      state.tts.rate = parseFloat($("voiceRate").value) || 1;
+      speak("This is how the selected voice will sound.");
+      state.tts.voiceURI = prevURI; state.tts.rate = prevRate;
+    });
     $("temperature").addEventListener("input", () => { $("tempValue").textContent = $("temperature").value; });
     $("topK").addEventListener("input", () => { $("topKValue").textContent = $("topK").value; });
     $("confirmDownload").addEventListener("click", approveDownload);
@@ -2083,6 +3236,165 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       $("copyInternals").textContent = "Copied";
       setTimeout(() => { $("copyInternals").textContent = "Copy internals URL"; }, 1600);
     });
+    /* ---------- Voice: text-to-speech (read aloud) ---------- */
+    const synth = window.speechSynthesis;
+    let voices = [];
+    let speakingId = null; // message id currently being spoken
+
+    function markdownToPlain(md) {
+      const div = document.createElement("div");
+      div.innerHTML = renderMarkdown(md || "");
+      div.querySelectorAll("pre, code").forEach((el) => { el.textContent = " " + el.textContent + " "; });
+      return (div.textContent || "").replace(/\s+/g, " ").trim();
+    }
+
+    // Higher score = better-sounding voice. Web Speech quality varies wildly by name.
+    function voiceScore(v) {
+      const uiLang = (navigator.language || "en-US").toLowerCase();
+      const uiBase = uiLang.split("-")[0];
+      const name = (v.name || "").toLowerCase();
+      const lang = (v.lang || "").toLowerCase();
+      let s = 0;
+      // Language match
+      if (lang === uiLang) s += 40;
+      else if (lang.split("-")[0] === uiBase) s += 25;
+      else if (lang.startsWith("en")) s += 8;
+      // Quality signals in the name
+      if (/(neural|natural|premium|enhanced|siri|studio|wavenet|journey)/.test(name)) s += 60;
+      if (name.includes("google")) s += 35;       // Chrome's online voices sound better than defaults
+      if (name.includes("microsoft")) s += 20;
+      // Known-mediocre / novelty macOS voices → push down
+      if (/(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy|princess|agnes|victoria|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|eloquence)/.test(name)) s -= 40;
+      if (name.includes("compact")) s -= 15;
+      // Prefer local (offline) only as a mild tiebreaker
+      if (v.localService) s += 2;
+      return s;
+    }
+
+    function rankedVoices() {
+      return voices.map((v, i) => ({ v, i, s: voiceScore(v) }))
+        .sort((a, b) => b.s - a.s || a.i - b.i)
+        .map((x) => x.v);
+    }
+
+    function bestVoiceURI() {
+      const r = rankedVoices();
+      return r.length ? r[0].voiceURI : "";
+    }
+
+    function voiceLabel(v) {
+      const tags = [];
+      if (/(neural|natural|premium|enhanced|siri|studio|wavenet)/i.test(v.name)) tags.push("HD");
+      tags.push(v.localService ? "offline" : "online");
+      return `${v.name} — ${v.lang} · ${tags.join(", ")}`;
+    }
+
+    function loadVoices() {
+      voices = synth ? synth.getVoices() : [];
+      const sel = $("voiceSelect");
+      if (!sel) return;
+      if (!voices.length) { sel.innerHTML = `<option value="">Default voice</option>`; return; }
+      // Auto-pick the best voice the first time, before the user has chosen one.
+      if (!state.tts.voiceURI) { state.tts.voiceURI = bestVoiceURI(); persist(); }
+      const ranked = rankedVoices();
+      const top = ranked.slice(0, 6), rest = ranked.slice(6);
+      const opt = (v) => `<option value="${escapeHtml(v.voiceURI)}">${escapeHtml(voiceLabel(v))}</option>`;
+      sel.innerHTML =
+        (top.length ? `<optgroup label="Recommended">${top.map(opt).join("")}</optgroup>` : "") +
+        (rest.length ? `<optgroup label="All voices">${rest.map(opt).join("")}</optgroup>` : "");
+      sel.value = state.tts.voiceURI && voices.some((v) => v.voiceURI === state.tts.voiceURI) ? state.tts.voiceURI : (ranked[0]?.voiceURI || "");
+    }
+
+    function pickVoice() {
+      const uri = state.tts.voiceURI || bestVoiceURI();
+      return voices.find((v) => v.voiceURI === uri) || null;
+    }
+
+    function stopSpeaking() {
+      if (synth) synth.cancel();
+      speakingId = null;
+      document.querySelectorAll(".speak.playing").forEach((b) => {
+        b.classList.remove("playing");
+        b.innerHTML = `<i data-lucide="volume-2" width="13" height="13"></i>`;
+        icons(b);
+      });
+    }
+
+    function speak(text, onEnd) {
+      if (!synth) { showBanner("This browser has no speech synthesis support."); return false; }
+      const clean = markdownToPlain(text);
+      if (!clean) return false;
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(clean);
+      const v = pickVoice();
+      if (v) { u.voice = v; u.lang = v.lang; }
+      u.rate = state.tts.rate || 1;
+      u.onend = u.onerror = () => onEnd && onEnd();
+      synth.speak(u);
+      return true;
+    }
+
+    function toggleSpeak(id, text, btn) {
+      if (speakingId === id) { stopSpeaking(); return; }
+      stopSpeaking();
+      const ok = speak(text, () => {
+        speakingId = null;
+        btn.classList.remove("playing");
+        btn.innerHTML = `<i data-lucide="volume-2" width="13" height="13"></i>`;
+        icons(btn);
+      });
+      if (!ok) return;
+      speakingId = id;
+      btn.classList.add("playing");
+      btn.innerHTML = `<i data-lucide="square" width="13" height="13"></i>`;
+      icons(btn);
+    }
+
+    function autoReadIfEnabled(msg) {
+      if (!state.tts.autoRead || !synth || !msg?.content) return;
+      const btn = thread.querySelector(`[data-speak="${msg.id}"]`);
+      if (btn) toggleSpeak(msg.id, msg.content, btn);
+      else speak(msg.content);
+    }
+
+    if (synth) {
+      loadVoices();
+      synth.addEventListener("voiceschanged", loadVoices);
+    } else {
+      const vs = $("voiceSelect"); if (vs) vs.disabled = true;
+    }
+
+    /* ---------- Voice: speech-to-text (dictation) ---------- */
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null, listening = false, micBase = "";
+    const micBtn = $("micBtn");
+
+    if (SpeechRec && micBtn) {
+      micBtn.hidden = false;
+      recognition = new SpeechRec();
+      recognition.lang = navigator.language || "en-US";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.onresult = (e) => {
+        let text = "";
+        for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+        input.value = (micBase ? micBase + " " : "") + text;
+        autosize();
+      };
+      recognition.onend = () => { listening = false; micBtn.classList.remove("listening"); input.focus(); };
+      recognition.onerror = (e) => {
+        listening = false; micBtn.classList.remove("listening");
+        if (e.error === "not-allowed" || e.error === "service-not-allowed") showBanner("Microphone permission denied. Allow mic access to dictate.");
+        else if (e.error === "network") showBanner("Speech recognition needs a network connection (and a secure/localhost origin).");
+      };
+      micBtn.addEventListener("click", () => {
+        if (listening) { recognition.stop(); return; }
+        micBase = input.value.trim();
+        try { recognition.start(); listening = true; micBtn.classList.add("listening"); }
+        catch { /* already started */ }
+      });
+    }
+
     boot();
   </script>
 </body>
