@@ -3,6 +3,7 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("styles.css");
   eleventyConfig.addPassthroughCopy("script.js");
   eleventyConfig.addPassthroughCopy("search.js");
+  eleventyConfig.addPassthroughCopy("CNAME");
 
   eleventyConfig.addCollection("posts", collectionApi => {
     return collectionApi
