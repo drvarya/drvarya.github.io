@@ -168,76 +168,6 @@
     }
     .provider-select:hover, .provider-select:focus { border-color: #ccc; }
     .model-fields[hidden] { display: none !important; }
-    .split-btn.active { background: #f3f3f1; color: var(--ink); }
-    .split-menu {
-      position: absolute; right: 0; top: calc(100% + 6px); z-index: 6;
-      min-width: 220px; background: #fff; border: 1px solid var(--line);
-      border-radius: 10px; box-shadow: var(--shadow); padding: 4px; display: none;
-    }
-    details.split-wrap { position: relative; }
-    details.split-wrap[open] .split-menu { display: block; }
-    .split-menu button {
-      display: block; width: 100%; text-align: left; padding: 8px 10px;
-      border: 0; background: none; font: 13px Inter, sans-serif; color: var(--ink);
-      border-radius: 7px; cursor: pointer;
-    }
-    .split-menu button:hover { background: #f3f3f1; }
-    .split-menu button.active { background: #eef2ff; }
-    .split-menu .hint { padding: 6px 10px 8px; color: var(--mute); font-size: 11px; line-height: 1.35; }
-    .split-rail {
-      display: none; gap: 8px; align-items: center; flex-wrap: wrap;
-      padding: 8px var(--gutter); border-bottom: 1px solid var(--line); background: #fafafa;
-    }
-    .shell.split-on .split-rail { display: flex; }
-    .split-rail label { font-size: 11px; color: var(--mute); }
-    .split-rail select {
-      font: 12px Inter, sans-serif; border: 1px solid var(--line); border-radius: 8px;
-      background: #fff; padding: 4px 8px; max-width: 14rem;
-    }
-    .split-workspace { display: none; flex: 1; min-height: 0; }
-    .shell.split-duo .split-workspace {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 0; flex: 1;
-    }
-    .split-pane {
-      display: flex; flex-direction: column; min-width: 0; min-height: 0;
-      border-right: 1px solid var(--line);
-    }
-    .split-pane:last-child { border-right: 0; }
-    .split-pane .thread { flex: 1; min-height: 0; }
-    .split-pane-head {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 6px 12px; font-size: 12px; color: var(--mute);
-      border-bottom: 1px solid var(--line); background: #fff; flex-shrink: 0;
-    }
-    .split-pane-head strong { color: var(--ink); font-weight: 500; }
-    .shell.split-duo .main > #thread,
-    .shell.split-duo .main > .composer-wrap,
-    .shell.split-duo .main > .meter,
-    .shell.split-duo .main > .debug { display: none !important; }
-    .shell.split-mirror #thread {
-      --chat: min(72rem, 100%);
-    }
-    .msg.split-pair {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-      width: min(72rem, calc(100% - 2 * var(--gutter)));
-      margin: 0 auto 18px;
-    }
-    @media (max-width: 900px) {
-      .msg.split-pair { grid-template-columns: 1fr; }
-      .shell.split-duo .split-workspace { grid-template-columns: 1fr; overflow: auto; }
-    }
-    .msg.split-pair .split-col {
-      border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 10px 12px;
-      min-width: 0;
-    }
-    .msg.split-pair .split-col .model-tag {
-      font-size: 11px; color: var(--mute); margin-bottom: 6px;
-    }
-    .tf-dl-files {
-      margin-top: 8px; max-height: 90px; overflow: auto;
-      font: 11px/1.4 ui-monospace, Menlo, monospace; color: var(--mute);
-    }
-
     .endpoint-status { font-size: 12px; color: var(--mute); margin-top: 6px; }
     .endpoint-status.ok { color: var(--ok); }
     .endpoint-status.bad { color: var(--bad); }
@@ -595,15 +525,6 @@
             <option value="transformers">Transformers.js (browser)</option>
             <option value="openai">OpenAI-compatible</option>
           </select>
-          <details class="split-wrap" id="splitMenu">
-            <summary class="icon light split-btn" id="splitBtn" aria-label="Split view" title="Split view"><i data-lucide="columns-2" width="16" height="16"></i></summary>
-            <div class="split-menu">
-              <div class="hint">Compare models or run two chats side by side.</div>
-              <button type="button" data-split="off">Single chat</button>
-              <button type="button" data-split="mirror">Mirror · same messages, two models</button>
-              <button type="button" data-split="duo">Side by side · two chats</button>
-            </div>
-          </details>
           <details class="more" id="chatMenu">
             <summary class="icon light" aria-label="Chat actions"><i data-lucide="ellipsis" width="16" height="16"></i></summary>
             <div class="more-menu">
@@ -628,52 +549,8 @@
           <p id="downloadLabel">Chrome is fetching the on-device model for this origin.</p>
           <div class="meter"><span id="downloadBar"></span></div>
         </div>
-        <div class="card" id="tfDownloadBox">
-          <h3 id="tfDownloadTitle">Downloading Transformers model</h3>
-          <p id="tfDownloadLabel">Fetching model weights into this browser cache…</p>
-          <div class="meter"><span id="tfDownloadBar"></span></div>
-          <div class="tf-dl-files" id="tfDownloadFiles"></div>
-        </div>
-      </div>
-      <div class="split-rail" id="splitRail">
-        <label for="splitRightProvider">Right pane</label>
-        <select id="splitRightProvider" class="provider-select" aria-label="Right provider">
-          <option value="nano">Chrome on-device</option>
-          <option value="transformers">Transformers.js</option>
-          <option value="openai">OpenAI-compatible</option>
-        </select>
-        <select id="splitRightModel" class="provider-select" aria-label="Right model"></select>
       </div>
       <div class="meter" title="Context window"><span id="contextBar"></span></div>
-
-      <div class="split-workspace" id="splitWorkspace">
-        <div class="split-pane split-pane-left" id="splitPaneLeft">
-          <div class="split-pane-head"><strong id="splitLeftLabel">Left</strong><span id="splitLeftMeta"></span></div>
-          <main class="thread" id="threadLeft" aria-live="polite"></main>
-          <div class="composer-wrap">
-            <form class="composer" id="composerLeft">
-              <textarea id="inputLeft" rows="1" placeholder="Message left chat"></textarea>
-              <div class="bar">
-                <span></span>
-                <button type="submit" class="send" aria-label="Send left"><i data-lucide="arrow-up" width="16" height="16"></i></button>
-              </div>
-            </form>
-          </div>
-        </div>
-        <div class="split-pane split-pane-right" id="splitPaneRight">
-          <div class="split-pane-head"><strong id="splitRightLabel">Right</strong><span id="splitRightMeta"></span></div>
-          <main class="thread" id="threadRight" aria-live="polite"></main>
-          <div class="composer-wrap">
-            <form class="composer" id="composerRight">
-              <textarea id="inputRight" rows="1" placeholder="Message right chat"></textarea>
-              <div class="bar">
-                <span></span>
-                <button type="submit" class="send" aria-label="Send right"><i data-lucide="arrow-up" width="16" height="16"></i></button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
 
       <main class="thread" id="thread" aria-live="polite"></main>
 
@@ -901,15 +778,11 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       provider: { kind: "nano", baseUrl: DEFAULT_OPENAI_BASE, model: "", apiKey: "" },
       openaiModels: [],
       tfRuntime: { lib: null, key: "", pipe: null, qwen: null },
-      split: {
-        mode: "off", // off | mirror | duo
-        right: { kind: "transformers", model: "onnx-community/Qwen3.5-0.8B-ONNX-OPT", baseUrl: DEFAULT_OPENAI_BASE, apiKey: "" },
-      },
     };
     let savedSampling = { temperature: null, topK: null };
 
     function blankChat() {
-      return { id: crypto.randomUUID(), title: "New chat", named: false, updatedAt: Date.now(), messages: [], rightMessages: [] };
+      return { id: crypto.randomUUID(), title: "New chat", named: false, updatedAt: Date.now(), messages: [] };
     }
     function current() { return state.chats.find((c) => c.id === state.activeId) || state.chats[0]; }
     function messages() { return current()?.messages || []; }
@@ -922,13 +795,10 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         chats: state.chats.map((c) => ({
           ...c,
-          messages: c.messages.map(({ role, content, reasoning, imageName, id, meta, tool, sides }) => ({
-            id, role, content, reasoning, imageName, meta, sides,
+          messages: c.messages.map(({ role, content, reasoning, imageName, id, meta, tool }) => ({
+            id, role, content, reasoning, imageName, meta,
             tool: tool ? { name: tool.name, args: tool.args, output: tool.output, error: tool.error, navigateUrl: tool.navigateUrl, genui: tool.genui } : undefined,
           })),
-          rightMessages: Array.isArray(c.rightMessages) ? c.rightMessages.map(({ role, content, reasoning, imageName, id, meta, tool, error, streaming }) => ({
-            id, role, content, reasoning, imageName, meta, tool, error,
-          })) : undefined,
         })),
         activeId: state.activeId,
         system: state.system,
@@ -944,10 +814,6 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
           baseUrl: state.provider.baseUrl,
           model: state.provider.model,
           apiKey: state.provider.apiKey,
-        },
-        split: {
-          mode: state.split.mode,
-          right: { ...state.split.right },
         },
       }));
     }
@@ -975,12 +841,6 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
             if (typeof raw.provider.baseUrl === "string" && raw.provider.baseUrl.trim()) state.provider.baseUrl = raw.provider.baseUrl.trim().replace(/\/$/, "");
             if (typeof raw.provider.model === "string") state.provider.model = raw.provider.model;
             if (typeof raw.provider.apiKey === "string") state.provider.apiKey = raw.provider.apiKey;
-          }
-          if (raw.split && typeof raw.split === "object") {
-            if (raw.split.mode === "off" || raw.split.mode === "mirror" || raw.split.mode === "duo") state.split.mode = raw.split.mode;
-            if (raw.split.right && typeof raw.split.right === "object") {
-              state.split.right = { ...state.split.right, ...raw.split.right };
-            }
           }
           return;
         }
@@ -1544,11 +1404,9 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         }
       }
     }
-    function createOpenAISession(cfg = null) {
-      const base = normalizeOpenAIBase(cfg?.baseUrl || state.provider.baseUrl);
-      const model = cfg?.model || state.provider.model;
-      const apiKey = cfg?.apiKey != null ? cfg.apiKey : state.provider.apiKey;
-      const historyFn = cfg?.historyFn;
+    function createOpenAISession() {
+      const base = normalizeOpenAIBase(state.provider.baseUrl);
+      const model = state.provider.model;
       if (!model) throw new Error("Pick a model in Settings → Models (Refresh models after starting Ollama).");
       return {
         provider: "openai",
@@ -1558,20 +1416,18 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         contextWindow: null,
         async *promptStreaming(promptInput, { signal } = {}) {
           // messages() already includes the current user turn; exclude streaming stub and rebuild user from promptInput
-          const priorMsgs = (historyFn ? historyFn() : messages()
+          const priorMsgs = messages()
             .filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming && m.content)
-          ).slice(0, -1);
+            .slice(0, -1);
           const body = {
             model,
             messages: toOpenAIMessages(promptInput, priorMsgs),
             stream: true,
             temperature: Number($("temperature")?.value) || 1,
           };
-          const headers = { "Content-Type": "application/json" };
-          if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
           const res = await fetch(`${base}/chat/completions`, {
             method: "POST",
-            headers,
+            headers: openaiHeaders(),
             body: JSON.stringify(body),
             signal,
           });
@@ -1639,58 +1495,6 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       }
       throw new Error(`Transformers.js failed to load (${lastErr?.message || lastErr || "unknown"})`);
     }
-    function showTfDownload(active, title) {
-      const box = $("tfDownloadBox");
-      if (!box) return;
-      box.classList.toggle("show", Boolean(active));
-      if (title && $("tfDownloadTitle")) $("tfDownloadTitle").textContent = title;
-      if (!active) {
-        if ($("tfDownloadBar")) $("tfDownloadBar").style.width = "0%";
-        if ($("tfDownloadLabel")) $("tfDownloadLabel").textContent = "Fetching model weights into this browser cache…";
-        if ($("tfDownloadFiles")) $("tfDownloadFiles").innerHTML = "";
-      }
-    }
-    function makeTfProgress(modelId) {
-      const short = String(modelId || "model").split("/").pop();
-      const fileRows = new Map();
-      let totalDone = 0;
-      let totalSize = 0;
-      showTfDownload(true, `Downloading ${short}`);
-      setStatus("down", "Downloading");
-      return (ev) => {
-        if (!ev) return;
-        if (ev.status === "initiate" || ev.status === "download" || ev.status === "progress") {
-          const file = String(ev.file || "weights");
-          const name = file.split("/").pop();
-          if (typeof ev.loaded === "number") {
-            const prev = fileRows.get(file) || { loaded: 0, total: 0 };
-            totalDone += (ev.loaded - prev.loaded);
-            prev.loaded = ev.loaded;
-            if (ev.total) prev.total = ev.total;
-            fileRows.set(file, prev);
-            totalSize = [...fileRows.values()].reduce((a, x) => a + (x.total || 0), 0) || totalDone;
-            const pct = totalSize ? Math.min(99, Math.round(100 * totalDone / totalSize)) : 0;
-            if ($("tfDownloadBar")) $("tfDownloadBar").style.width = pct + "%";
-            if ($("tfDownloadLabel")) {
-              $("tfDownloadLabel").textContent = totalSize
-                ? `${pct}% · ${(totalDone/1e6).toFixed(0)} / ${(totalSize/1e6).toFixed(0)} MB · ${name}`
-                : `Downloading ${name}…`;
-            }
-            if ($("tfDownloadFiles")) {
-              $("tfDownloadFiles").innerHTML = [...fileRows.entries()].slice(-6).map(([f, s]) => {
-                const n = String(f).split("/").pop();
-                const p = s.total ? Math.round(100 * s.loaded / s.total) : 0;
-                return `<div>${escapeHtml(n)} · ${p}%</div>`;
-              }).join("");
-            }
-          } else if ($("tfDownloadLabel")) {
-            $("tfDownloadLabel").textContent = `Preparing ${name}…`;
-          }
-        } else if (ev.status === "done" && $("tfDownloadLabel")) {
-          $("tfDownloadLabel").textContent = `Cached ${String(ev.file || "").split("/").pop() || short}`;
-        }
-      };
-    }
     function isMissingTfFile(err) {
       return /\.onnx|onnx_data|404|not found|does not exist|dtype/i.test(String(err?.message || err));
     }
@@ -1705,21 +1509,22 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         if (state.tfRuntime.pipe && state.tfRuntime.key === key) return state.tfRuntime.pipe;
         setTfStatus("", `Loading ${modelId.split("/").pop()} (${device}/${dtype})…`);
         try {
-          const onProg = makeTfProgress(modelId);
           const pipe = await T.pipeline("text-generation", modelId, {
             device,
             dtype,
-            progress_callback: onProg,
+            progress_callback: (ev) => {
+              if (typeof ev?.loaded === "number" && ev.total) {
+                const pct = Math.min(99, Math.round(100 * ev.loaded / ev.total));
+                setTfStatus("", `Downloading ${modelId.split("/").pop()} · ${pct}%`);
+              }
+            },
           });
           state.tfRuntime = { ...state.tfRuntime, key, pipe, qwen: null };
-          showTfDownload(false);
           setTfStatus("ok", `Loaded ${modelId.split("/").pop()} · ${device}/${dtype}`);
-          setStatus("ready", modelId.split("/").pop());
           return pipe;
         } catch (err) {
           lastErr = err;
           if (i < chainList.length - 1 && isMissingTfFile(err)) continue;
-          showTfDownload(false);
           throw err;
         }
       }
@@ -1734,25 +1539,21 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       const key = `qwen|${modelId}|${device}`;
       if (state.tfRuntime.qwen && state.tfRuntime.key === key) return state.tfRuntime.qwen;
       setTfStatus("", `Loading ${modelId.split("/").pop()} (Qwen3.5 · ${device})…`);
-      const onProg = makeTfProgress(modelId);
-      try {
-        const processor = await T.AutoProcessor.from_pretrained(modelId, { progress_callback: onProg });
-        const model = await T.Qwen3_5ForConditionalGeneration.from_pretrained(modelId, {
-          dtype: { embed_tokens: "q4", vision_encoder: "fp16", decoder_model_merged: "q4" },
-          device,
-          progress_callback: onProg,
-        });
-        const entry = { processor, model, device };
-        state.tfRuntime = { ...state.tfRuntime, key, qwen: entry, pipe: null };
-        setTfStatus("ok", `Loaded ${modelId.split("/").pop()} · ${device}`);
-        setStatus("ready", modelId.split("/").pop());
-        return entry;
-      } catch (err) {
-        showTfDownload(false);
-        throw err;
-      } finally {
-        showTfDownload(false);
-      }
+      const processor = await T.AutoProcessor.from_pretrained(modelId);
+      const model = await T.Qwen3_5ForConditionalGeneration.from_pretrained(modelId, {
+        dtype: { embed_tokens: "q4", vision_encoder: "fp16", decoder_model_merged: "q4" },
+        device,
+        progress_callback: (ev) => {
+          if (typeof ev?.loaded === "number" && ev.total) {
+            const pct = Math.min(99, Math.round(100 * ev.loaded / ev.total));
+            setTfStatus("", `Downloading ${modelId.split("/").pop()} · ${pct}%`);
+          }
+        },
+      });
+      const entry = { processor, model, device };
+      state.tfRuntime = { ...state.tfRuntime, key, qwen: entry, pipe: null };
+      setTfStatus("ok", `Loaded ${modelId.split("/").pop()} · ${device}`);
+      return entry;
     }
     function qwenChatPrompt(hist, thinking) {
       let p = "";
@@ -1782,7 +1583,6 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       } catch {}
       state.tfRuntime = { lib: state.tfRuntime?.lib || null, key: "", pipe: null, qwen: null };
       if (state.session?.provider === "transformers") state.session = null;
-      showTfDownload(false);
       setTfStatus("ok", `Cleared ${deletedCaches} cache storage${deletedCaches === 1 ? "" : "s"}.`);
       showBanner(`Transformers cache cleared (${deletedCaches}).`);
       return { deletedCaches };
@@ -1841,9 +1641,8 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       }
       return null;
     }
-    function createTransformersSession(modelOverride = null, opts = {}) {
-      const modelId = String(modelOverride || pickTfModel()).trim();
-      const historyFn = opts.historyFn;
+    function createTransformersSession() {
+      const modelId = pickTfModel();
       const meta = tfModelMeta(modelId) || { id: modelId, kind: "pipe", chain: ["q4", "fp32"] };
       return {
         provider: "transformers",
@@ -1859,8 +1658,10 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
 
           if (meta.kind === "qwen") {
             const { processor, model } = await ensureTfQwen(modelId);
-            const source = historyFn ? historyFn() : messages().filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming);
-            const hist = source.slice(-8).map((m) => ({
+            const hist = messages()
+              .filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming)
+              .slice(-8)
+              .map((m) => ({
                 role: m.role,
                 text: String(m.content || ""),
                 hasImage: Boolean(m.imageUrl || m.imageName),
@@ -1904,8 +1705,10 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
             throw new Error("This model is text-only. Pick a Qwen3.5 model to chat about images.");
           }
           const pipe = await ensureTfPipe(modelId, meta.chain);
-          const source = historyFn ? historyFn() : messages().filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming && m.content);
-          const hist = source.slice(-8).map((m) => ({ role: m.role, content: String(m.content) }));
+          const hist = messages()
+            .filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming && m.content)
+            .slice(-8)
+            .map((m) => ({ role: m.role, content: String(m.content) }));
           let chatPrompt;
           try {
             chatPrompt = pipe.tokenizer.apply_chat_template(hist, { tokenize: false, add_generation_prompt: true });
@@ -1943,205 +1746,6 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
         },
         destroy() {},
       };
-    }
-    function providerLabel(kind, model) {
-      if (kind === "openai") return model || "OpenAI-compatible";
-      if (kind === "transformers") return model || "Transformers.js";
-      return "Chrome on-device";
-    }
-    function historyForMirrorSide(side) {
-      return messages()
-        .filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming)
-        .map((m) => {
-          if (m.role === "assistant" && m.sides) {
-            const sideMsg = m.sides[side] || {};
-            return {
-              role: "assistant",
-              content: String(sideMsg.content || ""),
-              imageUrl: m.imageUrl,
-              imageName: m.imageName,
-            };
-          }
-          return {
-            role: m.role,
-            content: String(m.content || ""),
-            imageUrl: m.imageUrl,
-            imageName: m.imageName,
-          };
-        })
-        .filter((m) => m.content || m.imageUrl);
-    }
-    function rightMessages() {
-      const chat = current();
-      if (!chat) return [];
-      if (!Array.isArray(chat.rightMessages)) chat.rightMessages = [];
-      return chat.rightMessages;
-    }
-    function fillSplitRightModelSelect() {
-      const sel = $("splitRightModel");
-      const kind = $("splitRightProvider")?.value || state.split.right.kind || "transformers";
-      if (!sel) return;
-      if (kind === "transformers") {
-        const pick = state.split.right.model || TF_DEFAULT_MODEL;
-        sel.innerHTML = TF_CHAT_MODELS.map((m) =>
-          `<option value="${escapeHtml(m.id)}"${m.id === pick ? " selected" : ""}>${escapeHtml(m.short)}</option>`
-        ).join("");
-        if (!TF_CHAT_MODELS.some((m) => m.id === pick)) sel.value = TF_DEFAULT_MODEL;
-      } else if (kind === "openai") {
-        const models = state.openaiModels.length ? state.openaiModels : (state.split.right.model ? [state.split.right.model] : []);
-        const pick = state.split.right.model || models[0] || "";
-        sel.innerHTML = models.length
-          ? models.map((id) => `<option value="${escapeHtml(id)}"${id === pick ? " selected" : ""}>${escapeHtml(id)}</option>`).join("")
-          : `<option value="">Refresh OpenAI models in Settings</option>`;
-      } else {
-        sel.innerHTML = `<option value="nano">Gemini Nano</option>`;
-        sel.value = "nano";
-      }
-    }
-    function syncSplitRailFromState() {
-      if ($("splitRightProvider")) $("splitRightProvider").value = state.split.right.kind || "transformers";
-      fillSplitRightModelSelect();
-      if ($("splitRightModel") && state.split.right.model) {
-        const exists = [...($("splitRightModel").options || [])].some((o) => o.value === state.split.right.model);
-        if (exists) $("splitRightModel").value = state.split.right.model;
-      }
-    }
-    function readSplitRightFromUI() {
-      const kind = $("splitRightProvider")?.value || state.split.right.kind || "transformers";
-      const model = $("splitRightModel")?.value || state.split.right.model || "";
-      state.split.right = {
-        ...state.split.right,
-        kind,
-        model: kind === "nano" ? "" : model,
-        baseUrl: state.split.right.baseUrl || state.provider.baseUrl || DEFAULT_OPENAI_BASE,
-        apiKey: state.split.right.apiKey != null ? state.split.right.apiKey : state.provider.apiKey,
-      };
-    }
-    function syncSplitUI() {
-      const mode = state.split.mode || "off";
-      const shell = $("shell");
-      if (!shell) return;
-      shell.classList.toggle("split-on", mode !== "off");
-      shell.classList.toggle("split-mirror", mode === "mirror");
-      shell.classList.toggle("split-duo", mode === "duo");
-      $("splitBtn")?.classList.toggle("active", mode !== "off");
-      document.querySelectorAll("#splitMenu [data-split]").forEach((btn) => {
-        btn.classList.toggle("active", btn.getAttribute("data-split") === mode);
-      });
-      syncSplitRailFromState();
-      const leftLabel = providerLabel(state.provider.kind, state.provider.model);
-      const rightLabel = providerLabel(state.split.right.kind, state.split.right.model);
-      if ($("splitLeftLabel")) $("splitLeftLabel").textContent = mode === "duo" ? "Left chat" : "Left";
-      if ($("splitRightLabel")) $("splitRightLabel").textContent = mode === "duo" ? "Right chat" : "Right";
-      if ($("splitLeftMeta")) $("splitLeftMeta").textContent = leftLabel;
-      if ($("splitRightMeta")) $("splitRightMeta").textContent = rightLabel;
-      if (mode === "duo") renderDuoThreads();
-      else if (mode === "mirror") renderThread();
-      icons($("splitMenu"));
-    }
-    function setSplitMode(mode) {
-      if (!["off", "mirror", "duo"].includes(mode)) return;
-      state.split.mode = mode;
-      if (mode !== "off") {
-        if (!state.split.right.kind) state.split.right.kind = "transformers";
-        if (!state.split.right.model) state.split.right.model = TF_DEFAULT_MODEL;
-        const chat = current();
-        if (chat && !Array.isArray(chat.rightMessages)) chat.rightMessages = [];
-      }
-      persist();
-      syncSplitUI();
-      $("splitMenu").open = false;
-    }
-    function renderMessagesInto(target, list) {
-      if (!target) return;
-      if (!list.length) {
-        target.innerHTML = `<div class="empty"><h2>Empty chat</h2><p>Send a message to start.</p></div>`;
-        return;
-      }
-      target.innerHTML = "";
-      for (const msg of list) target.appendChild(messageEl(msg));
-      target.scrollTop = target.scrollHeight;
-      icons(target);
-    }
-    function renderDuoThreads() {
-      renderMessagesInto($("threadLeft"), messages());
-      renderMessagesInto($("threadRight"), rightMessages());
-    }
-    function upsertInto(target, msg) {
-      if (!target) return;
-      const existing = target.querySelector(`[data-id="${msg.id}"]`);
-      const next = messageEl(msg);
-      if (existing) existing.replaceWith(next);
-      else {
-        if (target.querySelector(".empty")) target.innerHTML = "";
-        target.appendChild(next);
-      }
-      icons(next);
-      target.scrollTop = target.scrollHeight;
-    }
-    async function createSessionForConfig(cfg) {
-      const kind = cfg?.kind || "nano";
-      if (kind === "openai") return createOpenAISession(cfg);
-      if (kind === "transformers") return createTransformersSession(cfg.model || TF_DEFAULT_MODEL, { historyFn: cfg.historyFn });
-      const LM = api();
-      if (!LM) throw new Error("Chrome Prompt API is not available in this browser.");
-      const options = {
-        expectedInputs: [{ type: "text", languages: ["en"] }],
-        expectedOutputs: [{ type: "text", languages: ["en"] }],
-        initialPrompts: [{ role: "system", content: buildSystemPrompt() }],
-      };
-      if (state.multimodal) options.expectedInputs.push({ type: "image" });
-      if (state.params) {
-        options.temperature = Number($("temperature").value);
-        options.topK = Number($("topK").value);
-      }
-      const hist = (cfg.historyFn ? cfg.historyFn() : messages())
-        .filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming && m.content)
-        .slice(0, -1).slice(-12)
-        .map((m) => ({ role: m.role, content: String(m.content) }));
-      options.initialPrompts.push(...hist);
-      const session = await LM.create(options);
-      session.provider = "nano";
-      return session;
-    }
-    async function streamIntoMessage(session, promptInput, msg, { signal, onUpdate } = {}) {
-      const collect = accumulate();
-      if (typeof session.promptStreaming === "function") {
-        const stream = session.promptStreaming(promptInput, { signal });
-        for await (const chunk of stream) {
-          if (typeof chunk === "string") msg.content = collect(chunk);
-          else if (chunk && typeof chunk === "object") {
-            if (chunk.reasoning) msg.reasoning = (msg.reasoning || "") + chunk.reasoning;
-            if (chunk.content) msg.content = collect(chunk.content);
-          }
-          onUpdate && onUpdate(msg);
-        }
-      } else {
-        msg.content = await session.prompt(promptInput, { signal });
-        onUpdate && onUpdate(msg);
-      }
-    }
-    async function buildPromptInput(content, imageFile, kind) {
-      let promptInput = content;
-      if (imageFile) {
-        if (kind === "openai") {
-          promptInput = {
-            role: "user",
-            content: [
-              { type: "text", text: content || "Describe this image." },
-              { type: "image_url", image_url: { url: await fileToDataUrl(imageFile) } },
-            ],
-          };
-        } else if (kind === "transformers") {
-          promptInput = { text: content || "Describe this image.", imageBlob: imageFile };
-        } else {
-          promptInput = [{ role: "user", content: [
-            { type: "text", value: content || "Describe this image." },
-            { type: "image", value: await toImageValue(imageFile) },
-          ] }];
-        }
-      }
-      return promptInput;
     }
     function setEndpointStatus(kind, text) {
       const el = $("endpointStatus");
@@ -2340,25 +1944,10 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       if (!cfg || cfg.type !== "clock") return "";
       return genuiClockHtml(cfg);
     }
-    function sideBubbleHtml(side, label) {
-      const body = side?.content || (side?.streaming ? "…" : "");
-      const err = side?.error ? `<div class="err">${escapeHtml(side.error)}</div>` : "";
-      return `<div class="split-col">
-        <div class="model-tag">${escapeHtml(label || "Model")}</div>
-        <div class="prose ${side?.streaming ? "streaming" : ""}">${renderMarkdown(body)}</div>
-        ${err}
-      </div>`;
-    }
     function messageEl(msg) {
       const wrap = document.createElement("article");
-      wrap.className = "msg col " + msg.role + (msg.sides ? " split-pair" : "");
+      wrap.className = "msg col " + msg.role;
       wrap.dataset.id = msg.id;
-      if (msg.role === "assistant" && msg.sides) {
-        const leftLabel = msg.sides.left?.label || "Left";
-        const rightLabel = msg.sides.right?.label || "Right";
-        wrap.innerHTML = `${sideBubbleHtml(msg.sides.left, leftLabel)}${sideBubbleHtml(msg.sides.right, rightLabel)}`;
-        return wrap;
-      }
       wrap.innerHTML = msg.role === "user" ? `
         <div class="bubble">
           <div class="prose">${renderMarkdown(msg.content || "")}</div>
@@ -2398,10 +1987,6 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     }
     function renderThread() {
       titleInput.value = current()?.title || "New chat";
-      if (state.split.mode === "duo") {
-        renderDuoThreads();
-        return;
-      }
       if (!messages().length) { emptyState(); return; }
       thread.innerHTML = "";
       for (const msg of messages()) thread.appendChild(messageEl(msg));
@@ -2712,112 +2297,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
       if (!file) return null;
       try { return await createImageBitmap(file); } catch { return file; }
     }
-    async function sendMirror(text, imageFile) {
-      const content = (text || "").trim();
-      if ((!content && !imageFile) || state.busy) return;
-      readSplitRightFromUI();
-      const leftCfg = { kind: state.provider.kind, model: state.provider.model, baseUrl: state.provider.baseUrl, apiKey: state.provider.apiKey, historyFn: () => historyForMirrorSide("left") };
-      const rightCfg = { ...state.split.right, historyFn: () => historyForMirrorSide("right") };
-      state.busy = true; sendBtn.disabled = true; stopBtn.hidden = false; setStatus("busy", "Comparing");
-      const userMsg = { id: crypto.randomUUID(), role: "user", content: content || "(image)", imageName: imageFile?.name, imageUrl: imageFile ? URL.createObjectURL(imageFile) : null };
-      const assistantMsg = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: "",
-        streaming: true,
-        sides: {
-          left: { content: "", streaming: true, label: providerLabel(leftCfg.kind, leftCfg.model) },
-          right: { content: "", streaming: true, label: providerLabel(rightCfg.kind, rightCfg.model) },
-        },
-      };
-      const firstTurn = messages().every((m) => m.role !== "user");
-      messages().push(userMsg, assistantMsg);
-      if (firstTurn) {
-        placeholderTitle(current(), content || "Compare chat");
-        nameChatInBackground(current().id, content || "Compare models");
-      }
-      upsertMessage(userMsg); upsertMessage(assistantMsg);
-      input.value = ""; autosize(); clearImage(); persist(); renderSidebar();
-      state.abort = new AbortController();
-      const signal = state.abort.signal;
-      const runSide = async (side, cfg) => {
-        const sideMsg = assistantMsg.sides[side];
-        try {
-          const session = await createSessionForConfig(cfg);
-          const promptInput = await buildPromptInput(content, imageFile, cfg.kind);
-          await streamIntoMessage(session, promptInput, sideMsg, {
-            signal,
-            onUpdate: () => { assistantMsg.streaming = true; upsertMessage(assistantMsg); },
-          });
-        } catch (err) {
-          if (err?.name !== "AbortError") sideMsg.error = err?.message || String(err);
-        } finally {
-          sideMsg.streaming = false;
-          upsertMessage(assistantMsg);
-        }
-      };
-      try {
-        await Promise.all([runSide("left", leftCfg), runSide("right", rightCfg)]);
-        assistantMsg.content = [assistantMsg.sides.left.content, assistantMsg.sides.right.content].filter(Boolean).join("\n\n");
-      } finally {
-        assistantMsg.streaming = false;
-        upsertMessage(assistantMsg);
-        state.busy = false; state.abort = null; sendBtn.disabled = false; stopBtn.hidden = true;
-        setStatus("ready", "Ready");
-        persist(); renderSidebar();
-      }
-    }
-    async function sendDuo(text, imageFile, pane = "left") {
-      const content = (text || "").trim();
-      if ((!content && !imageFile) || state.busy) return;
-      readSplitRightFromUI();
-      const isRight = pane === "right";
-      const list = isRight ? rightMessages() : messages();
-      const cfg = isRight
-        ? { ...state.split.right, historyFn: () => rightMessages().filter((m) => (m.role === "user" || m.role === "assistant") && !m.streaming && m.content) }
-        : { kind: state.provider.kind, model: state.provider.model, baseUrl: state.provider.baseUrl, apiKey: state.provider.apiKey };
-      const target = isRight ? $("threadRight") : $("threadLeft");
-      const inputEl = isRight ? $("inputRight") : $("inputLeft");
-      state.busy = true; setStatus("busy", "Thinking");
-      const userMsg = { id: crypto.randomUUID(), role: "user", content: content || "(image)", imageName: imageFile?.name, imageUrl: imageFile ? URL.createObjectURL(imageFile) : null };
-      const assistantMsg = { id: crypto.randomUUID(), role: "assistant", content: "", streaming: true };
-      list.push(userMsg, assistantMsg);
-      if (!isRight) {
-        const firstTurn = list.filter((m) => m.role === "user").length === 1;
-        if (firstTurn) {
-          placeholderTitle(current(), content || "Image chat");
-          nameChatInBackground(current().id, content || "The user sent an image.");
-        }
-      }
-      upsertInto(target, userMsg); upsertInto(target, assistantMsg);
-      if (inputEl) inputEl.value = "";
-      persist(); renderSidebar();
-      state.abort = new AbortController();
-      try {
-        const session = await createSessionForConfig(cfg);
-        const promptInput = await buildPromptInput(content, imageFile, cfg.kind);
-        await streamIntoMessage(session, promptInput, assistantMsg, {
-          signal: state.abort.signal,
-          onUpdate: () => upsertInto(target, assistantMsg),
-        });
-      } catch (err) {
-        if (err?.name !== "AbortError") {
-          assistantMsg.error = err?.message || String(err);
-          showBanner(assistantMsg.error);
-          setStatus("bad", "Error");
-        }
-      } finally {
-        assistantMsg.streaming = false;
-        upsertInto(target, assistantMsg);
-        state.busy = false; state.abort = null;
-        if (!assistantMsg.error) setStatus("ready", "Ready");
-        persist(); renderSidebar();
-      }
-    }
-    async function send(text, imageFile, opts = {}) {
-      const pane = opts.pane || "main";
-      if (state.split.mode === "mirror" && pane === "main") return sendMirror(text, imageFile);
-      if (state.split.mode === "duo") return sendDuo(text, imageFile, pane === "right" ? "right" : "left");
+    async function send(text, imageFile) {
       const content = (text || "").trim();
       if ((!content && !imageFile) || state.busy) return;
       if (isNanoProvider() && imageFile && !state.multimodal) { showBanner("Image prompts are not available. This Chrome model is text-only."); return; }
@@ -3486,7 +2966,6 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     async function boot() {
       load(); destroySession(); renderSidebar(); renderThread(); icons(); setDebug(state.debug);
       syncProviderUI();
-      syncSplitUI();
       $("helpBox").innerHTML = helpHtml("checking");
       if (isOpenAIProvider()) {
         $("consentCard").classList.remove("show");
@@ -3674,39 +3153,7 @@ When MCP tools are enabled, the app may fetch web pages or run code in an isolat
     $("settingsTabMcp").addEventListener("click", () => setSettingsTab("mcp"));
     $("headerProvider").addEventListener("change", (e) => {
       applyProviderKind(e.target.value);
-      syncSplitUI();
       if (!messages().length) renderThread();
-    });
-    $("splitMenu")?.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-split]");
-      if (!btn) return;
-      setSplitMode(btn.getAttribute("data-split"));
-    });
-    $("splitRightProvider")?.addEventListener("change", () => {
-      readSplitRightFromUI();
-      fillSplitRightModelSelect();
-      readSplitRightFromUI();
-      persist();
-      syncSplitUI();
-    });
-    $("splitRightModel")?.addEventListener("change", () => {
-      readSplitRightFromUI();
-      persist();
-      syncSplitUI();
-    });
-    $("composerLeft")?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      send($("inputLeft")?.value || "", null, { pane: "left" });
-    });
-    $("composerRight")?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      send($("inputRight")?.value || "", null, { pane: "right" });
-    });
-    $("inputLeft")?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send($("inputLeft").value || "", null, { pane: "left" }); }
-    });
-    $("inputRight")?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send($("inputRight").value || "", null, { pane: "right" }); }
     });
     $("providerKind").addEventListener("change", () => {
       const kind = $("providerKind").value;
