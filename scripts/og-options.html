@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OG Options</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #f3efe4; }
+    canvas { display: block; width: 1200px; height: 630px; }
+  </style>
+</head>
+<body>
+  <canvas id="c" width="1200" height="630"></canvas>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const THEME = params.get("theme") || "portrait";
+    const W = 1200, H = 630;
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
+    const avatar = new Image();
+    avatar.src = "../assets/avatar.png";
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const rgb = (r, g, b, a = 1) => `rgba(${r|0},${g|0},${b|0},${a})`;
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function creamBg(t, dusk = 0.35) {
+      const k = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 - Math.PI / 2);
+      const top = [
+        lerp(248, 220, k * dusk),
+        lerp(245, 200, k * dusk),
+        lerp(236, 168, k * dusk)
+      ];
+      const bot = [
+        lerp(238, 190, k * dusk),
+        lerp(228, 170, k * dusk),
+        lerp(206, 140, k * dusk)
+      ];
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, rgb(...top));
+      g.addColorStop(1, rgb(...bot));
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      return k;
+    }
+
+    function leftCopy() {
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "rgb(90,82,70)";
+      ctx.font = "600 22px 'IBM Plex Sans', system-ui, sans-serif";
+      ctx.fillText("da", 64, 78);
+      ctx.fillStyle = "rgb(31,27,22)";
+      ctx.font = "700 54px 'IBM Plex Sans', system-ui, sans-serif";
+      ctx.fillText("Dhruv Arya", 64, 250);
+      ctx.fillStyle = "rgb(90,82,70)";
+      ctx.font = "500 24px 'IBM Plex Sans', system-ui, sans-serif";
+      ctx.fillText("Search, ML, and agents.", 64, 298);
+      ctx.font = "500 20px 'IBM Plex Sans', system-ui, sans-serif";
+      ctx.fillText("drva.dev", 64, 560);
+    }
+
+    function drawAvatar(x, y, r, bob = 0) {
+      ctx.save();
+      ctx.translate(x, y + bob);
+      ctx.fillStyle = "rgba(40,30,18,0.14)";
+      ctx.beginPath();
+      ctx.ellipse(0, r + 10, r * 0.85, r * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#fbf8ef";
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(6,69,173,0.4)";
+      ctx.stroke();
+      if (avatar.complete && avatar.naturalWidth) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(avatar, -r, -r, r * 2, r * 2);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    // ——— Option B: Portrait ambient ———
+    function renderPortrait(t) {
+      creamBg(t, 0.28);
+      // soft drifting light bloom
+      const lx = 820 + Math.cos(t * Math.PI * 2) * 90;
+      const ly = 280 + Math.sin(t * Math.PI * 2) * 50;
+      const bloom = ctx.createRadialGradient(lx, ly, 10, lx, ly, 220);
+      bloom.addColorStop(0, "rgba(255,214,140,0.45)");
+      bloom.addColorStop(1, "rgba(255,214,140,0)");
+      ctx.fillStyle = bloom;
+      ctx.fillRect(500, 0, 700, H);
+
+      // floating dust
+      for (let i = 0; i < 36; i++) {
+        const x = 560 + ((i * 47 + t * 120) % 580);
+        const y = 60 + ((i * 89 + Math.sin(t * Math.PI * 2 + i) * 20) % 520);
+        ctx.fillStyle = `rgba(82,76,64,${0.08 + (i % 5) * 0.02})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.6 + (i % 3), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // soft rings around portrait
+      const bob = Math.sin(t * Math.PI * 2) * 8;
+      for (let i = 0; i < 3; i++) {
+        const pulse = 1 + Math.sin(t * Math.PI * 2 + i) * 0.03;
+        ctx.beginPath();
+        ctx.arc(860, 315 + bob, (110 + i * 28) * pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(6,69,173,${0.18 - i * 0.04})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      drawAvatar(860, 315, 92, bob);
+      leftCopy();
+    }
+
+    // ——— Option C: Search burst (check.supply energy) ———
+    function renderSearch(t) {
+      creamBg(t, 0.2);
+      leftCopy();
+
+      // twin “rails” / slot machine for search cards
+      const railX = 700, railW = 420, railY1 = 210, railY2 = 360, railH = 78;
+      function rail(y) {
+        ctx.fillStyle = "#efe7d6";
+        roundRect(railX, y, railW, railH, 18);
+        ctx.fill();
+        ctx.fillStyle = "#c8b89a";
+        roundRect(railX - 18, y - 8, 28, railH + 16, 10);
+        ctx.fill();
+        roundRect(railX + railW - 10, y - 8, 28, railH + 16, 10);
+        ctx.fill();
+        // mint collars like check.supply accent, but site blue-adjacent teal-olive
+        ctx.fillStyle = "#6f8f7a";
+        ctx.beginPath();
+        ctx.arc(railX + 8, y + railH / 2, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(railX + railW - 8, y + railH / 2, 14, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      rail(railY1);
+      rail(railY2);
+
+      const cards = [
+        { label: "ranking", y: railY1 },
+        { label: "retrieval", y: railY1 },
+        { label: "relevance", y: railY1 },
+        { label: "agents", y: railY2 },
+        { label: "context", y: railY2 },
+        { label: "orchestration", y: railY2 }
+      ];
+
+      // burst: cards race left→right then clear — loop via fractional phase
+      // two pulses per loop for “whoosh” energy
+      const pulse = (t * 2) % 1;
+      // ease: accelerate through middle
+      const ease = pulse < 0.15 ? pulse / 0.15 * 0.1
+        : pulse < 0.85 ? 0.1 + ((pulse - 0.15) / 0.7) * 0.8
+        : 0.9 + ((pulse - 0.85) / 0.15) * 0.1;
+
+      cards.forEach((c, i) => {
+        const lane = i % 3;
+        const base = -0.25 + lane * 0.18 + (i < 3 ? 0 : 0.05);
+        const p = (base + ease) % 1.35 - 0.2;
+        if (p < 0 || p > 1) return;
+        const x = railX + 24 + p * (railW - 140);
+        const w = 112, h = 48;
+        ctx.fillStyle = "#f7f4ea";
+        roundRect(x, c.y + 15, w, h, 10);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(31,27,22,0.12)";
+        ctx.stroke();
+        ctx.fillStyle = "rgba(31,27,22,0.55)";
+        roundRect(x + 10, c.y + 24, 54, 6, 2); ctx.fill();
+        roundRect(x + 10, c.y + 36, 36, 6, 2); ctx.fill();
+        ctx.fillStyle = "rgb(31,27,22)";
+        ctx.font = "600 12px 'IBM Plex Sans', system-ui, sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(c.label, x + 10, c.y + 55);
+      });
+
+      // small avatar badge
+      drawAvatar(1040, 120, 42, Math.sin(t * Math.PI * 2) * 4);
+    }
+
+    // ——— Option D: Agent constellation ———
+    function renderAgents(t) {
+      creamBg(t, 0.32);
+      leftCopy();
+
+      const cx = 860, cy = 320;
+      const nodes = [];
+      for (let i = 0; i < 12; i++) {
+        const ang = (i / 12) * Math.PI * 2 + t * Math.PI * 2 * 0.15;
+        const rad = 70 + (i % 4) * 28;
+        const bob = Math.sin(t * Math.PI * 2 * 2 + i) * 6;
+        nodes.push({
+          x: cx + Math.cos(ang) * rad,
+          y: cy + Math.sin(ang) * rad * 0.72 + bob,
+          r: 6 + (i % 3) * 2
+        });
+      }
+      // hub
+      nodes.push({ x: cx, y: cy + Math.sin(t * Math.PI * 2) * 5, r: 10, hub: true });
+
+      // links
+      for (let i = 0; i < nodes.length - 1; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d < 130 || a.hub || b.hub && d < 160) {
+            ctx.strokeStyle = `rgba(6,69,173,${0.12 + 0.1 * Math.sin(t * Math.PI * 2 + i + j)})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // traveling packets along a few edges
+      for (let i = 0; i < 6; i++) {
+        const a = nodes[i];
+        const b = nodes[(i + 3) % (nodes.length - 1)];
+        const p = (t * (1 + i % 2) + i * 0.15) % 1;
+        const x = lerp(a.x, b.x, p);
+        const y = lerp(a.y, b.y, p);
+        ctx.fillStyle = "rgba(6,69,173,0.75)";
+        ctx.beginPath();
+        ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (const n of nodes) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = n.hub ? "rgba(6,69,173,0.85)" : "rgba(31,27,22,0.55)";
+        ctx.fill();
+        if (n.hub) {
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r + 8 + Math.sin(t * Math.PI * 2 * 2) * 3, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(6,69,173,0.25)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+
+      drawAvatar(860, 320, 48, Math.sin(t * Math.PI * 2) * 6);
+    }
+
+    // ——— Option E: Type only / editorial ———
+    function renderType(t) {
+      creamBg(t, 0.22);
+      // slow horizontal light band
+      const bandY = 200 + Math.sin(t * Math.PI * 2) * 40;
+      const band = ctx.createLinearGradient(0, bandY - 80, 0, bandY + 80);
+      band.addColorStop(0, "rgba(255,255,255,0)");
+      band.addColorStop(0.5, "rgba(255,255,255,0.35)");
+      band.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = band;
+      ctx.fillRect(0, bandY - 80, W, 160);
+
+      const bob = Math.sin(t * Math.PI * 2) * 6;
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgb(90,82,70)";
+      ctx.font = "600 20px 'IBM Plex Sans', system-ui, sans-serif";
+      ctx.fillText("drva.dev", 96, 120 + bob * 0.3);
+
+      ctx.fillStyle = "rgb(31,27,22)";
+      ctx.font = "700 92px 'IBM Plex Sans', system-ui, sans-serif";
+      ctx.fillText("Dhruv Arya", 96, 300 + bob);
+
+      ctx.fillStyle = "rgb(90,82,70)";
+      ctx.font = "500 34px 'IBM Plex Sans', system-ui, sans-serif";
+      ctx.fillText("Search, ML, and agents.", 96, 360 + bob);
+
+      // small avatar bottom-right
+      drawAvatar(1040, 480, 54, -bob);
+    }
+
+    const renderers = {
+      portrait: renderPortrait,
+      search: renderSearch,
+      agents: renderAgents,
+      type: renderType
+    };
+
+    window.__theme = THEME;
+    window.__render = function (frame, total) {
+      const t = frame / total;
+      (renderers[THEME] || renderPortrait)(t);
+    };
+
+    let f = 0;
+    function tick() {
+      if (window.__capturing) return;
+      window.__render(f % 300, 300);
+      f++;
+      requestAnimationFrame(tick);
+    }
+
+    window.__ready = false;
+    function markReady() {
+      window.__ready = true;
+      if (!window.__capturing) tick();
+    }
+    avatar.onload = markReady;
+    avatar.onerror = markReady;
+    if (avatar.complete) markReady();
+  </script>
+</body>
+</html>
