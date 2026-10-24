@@ -37,16 +37,17 @@
     ];
 
     const clouds = [
-      { x: 700, y: 78, s: 1.15, sp: 18 },
-      { x: 980, y: 150, s: 0.85, sp: 12 },
-      { x: 780, y: 500, s: 1.05, sp: 15 },
-      { x: 1080, y: 400, s: 0.75, sp: 10 }
+      { x: 700, y: 78, s: 1.15, laps: 1 },
+      { x: 980, y: 150, s: 0.85, laps: 1 },
+      { x: 780, y: 500, s: 1.05, laps: 2 },
+      { x: 1080, y: 400, s: 0.75, laps: 1 }
     ];
 
     const packets = Array.from({ length: 8 }, (_, i) => ({
       edge: i % islands.length,
       t: i / 8,
-      speed: 0.12 + (i % 3) * 0.03
+      // integer laps per loop → seamless
+      laps: 1 + (i % 2)
     }));
 
     function lerp(a, b, t) { return a + (b - a) * t; }
@@ -289,7 +290,7 @@
 
       for (const c of clouds) {
         const span = 560;
-        const x = 620 + ((c.x - 620 + t * c.sp * 28) % span + span) % span;
+        const x = 620 + ((c.x - 620 + t * c.laps * span) % span + span) % span;
         drawCloud(x, c.y + Math.sin(t * Math.PI * 2 + c.x) * 6, c.s, 0.62 - nightness * 0.2);
       }
 
@@ -301,7 +302,7 @@
       for (const pkt of packets) {
         const a = positions[pkt.edge];
         const b = positions[(pkt.edge + 1) % positions.length];
-        const pt = pointOnBridge(a, b, (pkt.t + t * pkt.speed) % 1);
+        const pt = pointOnBridge(a, b, (pkt.t + t * pkt.laps) % 1);
         ctx.beginPath();
         ctx.fillStyle = `rgba(6, 69, 173, ${0.7 + nightness * 0.15})`;
         ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
