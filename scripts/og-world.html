@@ -89,13 +89,12 @@
 
     function islandPos(island, t) {
       const cx = 860, cy = 325;
-      // Visible orbit + bob (nikunj-style living world)
-      const ang = island.angle + t * Math.PI * 2 * 0.2;
+      // Fixed layout + bob/breath only so the 10s loop is seamless (like nikunjk.com)
       const bob = Math.sin(t * Math.PI * 2 * 2 + island.angle * 3) * 14;
-      const breath = 1 + Math.sin(t * Math.PI * 2 + island.angle) * 0.03;
+      const breath = 1 + Math.sin(t * Math.PI * 2 + island.angle) * 0.035;
       return {
-        x: cx + Math.cos(ang) * 175 * breath,
-        y: cy + Math.sin(ang) * 128 * breath + bob
+        x: cx + Math.cos(island.angle) * 175 * breath,
+        y: cy + Math.sin(island.angle) * 128 * breath + bob
       };
     }
 
