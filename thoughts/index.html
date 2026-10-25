@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Thoughts by Dhruv Arya">
+    <title>Thoughts | Dhruv Arya</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main>
+      <header class="page-header">
+        <p><a href="/">Dhruv Arya</a></p>
+        <nav aria-label="Site links">
+          <a href="/">Home</a>
+        </nav>
+      </header>
+
+      <section class="intro">
+        <h1>Thoughts</h1>
+        <p>Notes on software engineering, systems, debugging, and things I am learning.</p>
+        <label class="search-box">
+          <span>Search thoughts</span>
+          <input id="search-input" type="search" placeholder="search, agents, systems">
+        </label>
+      </section>
+
+      <section class="theme-filter" aria-label="Themes">
+        <h2>Themes</h2>
+        <div class="theme-pills">
+          <button type="button" class="theme-pill is-active" data-theme="all">All</button>
+          <button type="button" class="theme-pill" data-theme="search">Search</button>
+          <button type="button" class="theme-pill" data-theme="agents">Agents</button>
+          <button type="button" class="theme-pill" data-theme="ml">ML</button>
+          <button type="button" class="theme-pill" data-theme="founder">Founder</button>
+        </div>
+      </section>
+
+      <section class="list-section" aria-labelledby="posts-title">
+        <h2 id="posts-title">Thoughts:</h2>
+        <ul class="link-list">
+          
+            <li data-theme="search">
+              <a href="/posts/2026-05-26-first-post/">First Post</a>
+              <span>May 26, 2026 · search · A short note to validate the Markdown blog setup.</span>
+            </li>
+          
+        </ul>
+      </section>
+    </main>
+    <script src="/search.js"></script>
+  </body>
+</html>
